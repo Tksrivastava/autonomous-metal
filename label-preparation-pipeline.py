@@ -33,7 +33,6 @@ def main() -> None:
 
     logger.info("Saving labels to dataset path")
     label_df.to_csv(LABEL_PATH, index=False)
-    label_df.to_clipboard(index=False)
 
 
 
