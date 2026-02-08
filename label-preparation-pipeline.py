@@ -1,33 +1,41 @@
 import sqlite3
-import pandas as pd
 from pathlib import Path
+from typing import Final
+
+import pandas as pd
 
 from core.logging import LoggerFactory
-from core.utils import FetchFromKaggle
+from core.utils import FetchFromKaggle, PrepareLabels
 
 
-logger_factory = LoggerFactory()
-logger = logger_factory.get_logger(__name__)
+logger = LoggerFactory().get_logger(__name__)
 
 
-FILE_PATH = Path(__file__).resolve().parents[0]
-DATASET_PATH = FILE_PATH / "dataset" / "autonomous-metal-db.db"
+BASE_DIR: Final[Path] = Path(__file__).resolve().parent
+DATASET_PATH: Final[Path] = BASE_DIR / "dataset" / "autonomous-metal-db.db"
+LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
+HORIZON_DAYS: Final[int] = 5
+
 
 def main() -> None:
-    """
-    Execute the feature generation pipeline.
-    """
+    """Execute the label preparation pipeline."""
     logger.info("Starting label preparation pipeline")
 
     logger.info("Ensuring dataset availability via Kaggle fetch")
     FetchFromKaggle().download()
 
-    logger.info(f"Establishing connection to database from {DATASET_PATH}")
-    conn = sqlite3.connect(DATASET_PATH)
+    logger.info("Connecting to database: %s", DATASET_PATH)
 
-    logger.info("Fetching LME Aluminum spot price")
-    df = pd.read_sql("SELECT * FROM `lme-aluminum-spot-prices`", conn)
-    logger.info(f"Data fetched - {df.shape}")
+    with sqlite3.connect(DATASET_PATH) as conn:
+        prepare_labels = PrepareLabels(conn=conn)
+
+    label_df = prepare_labels.build_labels(HORIZON_DAYS)
+
+    logger.info("Saving labels to dataset path")
+    label_df.to_csv(LABEL_PATH, index=False)
+    label_df.to_clipboard(index=False)
+
+
 
 if __name__ == "__main__":
     main()

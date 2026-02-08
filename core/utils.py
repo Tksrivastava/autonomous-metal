@@ -1,5 +1,5 @@
 import os
-from typing import List
+import sqlite3
 import tensorflow as tf
 from pathlib import Path
 import plotly.graph_objects as go
@@ -124,3 +124,50 @@ Notes
                         yaxis_title='Loss', template='plotly_white', hovermode='x unified')
         fig.show()
         return fig
+
+class PrepareLabels:
+    def __init__(self, conn: sqlite3.Connection):
+        self.conn = conn
+    def _load_spot_prices(self) -> pd.DataFrame:
+        """Load and prepare LME Aluminum spot prices."""
+        query = """
+            SELECT
+                date AS ssd,
+                CAST(lme_al AS REAL) AS lme_al
+            FROM "lme-aluminum-spot-prices"
+            ORDER BY date
+        """
+        df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        logger.info("Spot prices loaded: %s rows", len(df))
+        return df
+    def build_labels(self, horizon: int) -> pd.DataFrame:
+        """
+        Create future return labels for given horizon.
+        Output columns:
+            ssd, current_spot_price, predicted_for, days_ahead, y
+        """
+        df = self._load_spot_prices()
+        logger.info(f"LME Aluminum spot prices data fetched - {df.shape}")
+        df.sort_values("ssd", inplace=True)
+        df.reset_index(drop=True, inplace=True)
+
+        records = []
+
+        for days in range(1, horizon + 1):
+            future_price = df["lme_al"].shift(-days)
+            future_date = df["ssd"].shift(-days)
+
+            temp = pd.DataFrame({
+                "ssd": df["ssd"],
+                "current_spot_price": df["lme_al"],
+                "predicted_for": future_date,
+                "days_ahead": days,
+                "y": (future_price - df["lme_al"]) / df["lme_al"],
+            })
+
+            records.append(temp)
+
+        label_df = pd.concat(records, ignore_index=True)
+
+        logger.info("Labels created: %s rows", len(label_df))
+        return label_df
