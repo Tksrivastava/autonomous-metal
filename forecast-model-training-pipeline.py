@@ -43,8 +43,10 @@ def main() -> None:
     scaler = RobustScaler()
 
     n_samples, n_steps, n_features = x.shape
-    x = x.reshape(-1, n_features) ## Converting x to 2D
-    x = scaler.fit_transform(x).reshape(n_samples, n_steps, n_features) ## Converting to 3D after scaling
+    x = x.reshape(-1, n_features)  ## Converting x to 2D
+    x = scaler.fit_transform(x).reshape(
+        n_samples, n_steps, n_features
+    )  ## Converting to 3D after scaling
 
     with open(SCALER_PATH, "wb") as f:
         pickle.dump(scaler, f)
@@ -52,14 +54,16 @@ def main() -> None:
 
     logger.info(
         "Initializing autoencoder | input_space=%d | latent_space=%d | seed=%d",
-        x.shape[1], 10, 42
+        x.shape[1],
+        10,
+        42,
     )
-    
+
     model = AutonomusForecastModelArchitecture(
         seed=42,
         input_horizon_space=n_steps,
         input_feature_space=n_features,
-        output_horizon_space=y.shape[1]
+        output_horizon_space=y.shape[1],
     )
 
     model.summary()
@@ -67,19 +71,15 @@ def main() -> None:
     logger.info("Starting model training")
 
     history = model.fit(
-        x=x,
-        y=y,
-        epochs=30,
-        batch_size=300,
-        validation_split=0.35,
-        shuffle=False
+        x=x, y=y, epochs=30, batch_size=300, validation_split=0.35, shuffle=False
     )
-    
-    for epoch in range(len(history.history["loss"])):
-        metrics_str = " | ".join(f"{metric}={values[epoch]:.6f}"
-                                 for metric, values in history.history.items())
-        logger.info(f"Epoch {epoch + 1:02d} | {metrics_str}")
 
+    for epoch in range(len(history.history["loss"])):
+        metrics_str = " | ".join(
+            f"{metric}={values[epoch]:.6f}"
+            for metric, values in history.history.items()
+        )
+        logger.info(f"Epoch {epoch + 1:02d} | {metrics_str}")
 
     logger.info("Training completed")
 
