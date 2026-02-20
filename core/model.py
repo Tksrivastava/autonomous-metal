@@ -4,70 +4,90 @@ import numpy as np
 import tensorflow as tf
 
 
-class AutoEncoderModelArchitecture:
+class AutonomusForecastModelArchitecture:
     """
-    Deterministic, feed-forward autoencoder architecture for representation learning
-    and dimensionality reduction.
+    Deterministic convolutional neural network (CNN) architecture for
+    multi-horizon time-series forecasting.
 
-    This class implements a symmetric autoencoder using fully connected layers with
-    batch normalization and L2 regularization in the encoder. The architecture is
-    designed to learn stable, low-dimensional latent representations suitable for
-    downstream tasks such as clustering, segmentation, or feature extraction.
+    This class implements a feed-forward temporal convolutional model using
+    1D convolutional layers to learn predictive representations from fixed-length
+    historical windows. The model maps a sequence of past observations to a
+    vector of future targets, enabling direct multi-step forecasting.
 
-    Key design characteristics:
-    - Linear latent space to preserve geometric structure for distance-based methods
-    - Encoder-side L2 regularization to prevent identity mapping
-    - Batch normalization in the encoder for training stability
-    - Layer normalization on the latent space to control scale drift
-    - Mean Squared Error (MSE) reconstruction objective
+    The architecture is designed for structured multivariate time-series data,
+    where each training sample consists of a fixed lookback window of historical
+    features and a corresponding future forecast horizon.
 
-    Reproducibility considerations:
+    Key design characteristics
+    --------------------------
+    - Temporal feature extraction using Conv1D layers
+    - Dilated convolutions to expand temporal receptive field without
+    increasing parameter count
+    - GELU nonlinearities for smooth gradient propagation
+    - Layer normalization for training stability
+    - Dense projection head for multi-step forecasting
+    - Direct sequence-to-vector prediction (no autoregressive recursion)
+    - Linear output layer suitable for regression objectives
+
+    Forecasting formulation
+    -----------------------
+    For a reference timestamp T:
+
+        Input  (X): observations from [T - lookback + 1, ..., T]
+        Output (y): targets from      [T + 1, ..., T + horizon]
+
+    This corresponds to supervised sequence-to-multi-horizon regression.
+
+    Reproducibility considerations
+    ------------------------------
     - Random seeds are set for Python, NumPy, and TensorFlow
     - Deterministic TensorFlow operations are requested where supported
-    - CUDA devices are explicitly disabled to favor deterministic CPU execution
-    - Full bitwise determinism is not guaranteed due to floating-point and optimizer behavior
+    - CUDA/GPU nondeterminism may still introduce minor numerical variation
+    - Full bitwise determinism is not guaranteed due to floating-point and
+    optimizer-level behavior
 
     Parameters
     ----------
     seed : int
         Random seed used to initialize Python, NumPy, and TensorFlow randomness.
 
-    latent_space : int
-        Dimensionality of the latent (bottleneck) representation. Must be smaller (< input_space//2)
-        than the input dimensionality.
+    input_horizon_space : int
+        Number of historical timesteps provided as model input
+        (lookback window length).
 
-    input_space : int
-        Dimensionality of the input feature space.
+    input_feature_space : int
+        Number of features observed at each timestep.
+
+    output_horizon_space : int
+        Number of future timesteps predicted by the model
+        (forecast horizon).
 
     Attributes
     ----------
     model : tf.keras.Model
-        The full autoencoder model mapping inputs to reconstructed outputs.
-
-    encoder : tf.keras.Model
-        Encoder sub-model mapping inputs to the latent representation.
+        Compiled TensorFlow model mapping historical sequences to
+        multi-step forecasts.
 
     Notes
     -----
-    This implementation is intended for structured/tabular data. It is not designed
-    for convolutional, sequential, or variational autoencoder use cases.
+    This implementation is intended for multivariate tabular time-series data.
+    It is not designed for image, NLP, or autoencoder-based representation
+    learning tasks.
 
-    The learned latent representations can be accessed via `get_encoded_input`
-    and are suitable for use with clustering algorithms such as KMeans, GMM,
-    or hierarchical clustering.
-    """
-    def __init__(self, seed: int, latent_space: int, input_space: int):
+    The model performs direct multi-horizon forecasting, meaning all future
+    steps are predicted simultaneously rather than recursively, reducing
+    error accumulation during inference."""
+    def __init__(self, seed: int, input_horizon_space: int, input_feature_space: int, output_horizon_space: int):
         self._set_seed(seed)
         self._disable_cuda()
 
         self.seed = seed
-        self.latent_space = latent_space
-        self.input_space = input_space
+        self.input_horizon_space = input_horizon_space
+        self.input_feature_space = input_feature_space
+        self.output_horizon_space = output_horizon_space
 
         self.model = self._build_model()
         self._compile_model()
-
-        self.encoder = tf.keras.Model(inputs=self.model.input, outputs=self.model.get_layer("latent_space").output)
 
     def _set_seed(self, seed: int):
         os.environ["PYTHONHASHSEED"] = str(seed)
@@ -84,27 +104,21 @@ class AutoEncoderModelArchitecture:
         tf.config.set_visible_devices([], "GPU")
 
     def _build_model(self) -> tf.keras.models.Model:
-        inp = tf.keras.layers.Input(shape=(self.input_space,), name="input_space")
+        inp = tf.keras.layers.Input(shape=(self.input_horizon_space, self.input_feature_space,), name="input_space")
         
-        # encoder 
-        x = tf.keras.layers.BatchNormalization()(inp)
-        x = tf.keras.layers.Dense(self.input_space // 2, activation="relu", 
-                                  use_bias=False, kernel_regularizer=tf.keras.regularizers.l2(1e-4))(x)
-        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Conv1D(filters=12, kernel_size=3, padding="same", activation="gelu", dilation_rate=2)(inp)
+        x = tf.keras.layers.Conv1D(filters=6, kernel_size=3, padding="same", activation="gelu", dilation_rate=1)(x)
+        x = tf.keras.layers.LayerNormalization()(x)
+        x = tf.keras.layers.GlobalAveragePooling1D()(x)
+        x = tf.keras.layers.Dense(10, activation="leaky_relu")(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
         
-        latent = tf.keras.layers.Dense(self.latent_space, activation="linear", 
-                                       use_bias=False, kernel_regularizer=tf.keras.regularizers.l2(1e-4))(x)
-        latent = tf.keras.layers.LayerNormalization(name="latent_space")(latent)
-
-        # decoder 
-        x = tf.keras.layers.Dense(self.input_space // 2, activation="relu")(latent)
+        out = tf.keras.layers.Dense(self.output_horizon_space, activation="linear", name="final_forecasting_space")(x)
         
-        out = tf.keras.layers.Dense(self.input_space, activation="linear", name="reconstruction")(x)
-        
-        return tf.keras.models.Model(inputs=inp, outputs=out, name="autoencoder")
+        return tf.keras.models.Model(inputs=inp, outputs=out, name="forecast_model")
 
     def _compile_model(self):
-        self.model.compile(optimizer='adam', loss='mse', metrics=[tf.keras.metrics.MeanAbsoluteError()])
+        self.model.compile(optimizer='adam', loss='mse')
     
     def summary(self):
         return self.model.summary()
@@ -116,26 +130,21 @@ class AutoEncoderModelArchitecture:
                                                                          restore_best_weights=True), 
                                **kwargs)
 
-    def get_reconstructed_input(self, x):
+    def predict(self, x):
         return self.model.predict(x)
-    
-    def get_encoded_input(self, x):
-        return self.encoder.predict(x)
 
     def save(self, path: str) -> None:
         self.model.save(path)
 
     @classmethod
-    def load(cls, path: str) -> "AutoEncoderModelArchitecture":
+    def load(cls, path: str) -> "AutonomusForecastModelArchitecture":
         model = tf.keras.models.load_model(path)
-
-        input_space = model.input_shape[-1]
-        latent_space = model.get_layer("latent_space").output_shape[-1]
 
         obj = cls(
             seed=0,
-            input_space=input_space,
-            latent_space=latent_space
+            input_horizon_space=model.input_shape[1],
+            input_feature_space=model.input_shape[2],
+            output_horizon_space=model.output_shape[1]
         )
 
         obj.model = model
