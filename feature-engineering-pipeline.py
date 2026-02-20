@@ -5,7 +5,7 @@ from typing import Final
 import pandas as pd
 
 from core.logging import LoggerFactory
-from core.utils import FetchFromKaggle, PrepareLabels
+from core.utils import FetchFromKaggle, FetchRawFeatures
 
 
 logger = LoggerFactory().get_logger(__name__)
@@ -13,9 +13,7 @@ logger = LoggerFactory().get_logger(__name__)
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent
 DATASET_PATH: Final[Path] = BASE_DIR / "dataset" / "autonomous-metal-db.db"
-LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
-HORIZON_DAYS: Final[int] = 5
-
+FEATURE_PATH: Final[Path] = BASE_DIR / "dataset" / "features.csv"
 
 if __name__ == "__main__":
     logger.info("Starting label preparation pipeline")
@@ -26,9 +24,9 @@ if __name__ == "__main__":
     logger.info("Connecting to database: %s", DATASET_PATH)
 
     with sqlite3.connect(DATASET_PATH) as conn:
-        prepare_labels = PrepareLabels(conn=conn)
+        raw_features = FetchRawFeatures(conn=conn)
 
-    label_df = prepare_labels.build_labels(HORIZON_DAYS)
-
-    logger.info("Saving labels to dataset path")
-    label_df.to_csv(LABEL_PATH, index=False)
+    features = raw_features.fetch()
+    
+    logger.info("Saving raw features to dataset path")
+    features.to_csv(FEATURE_PATH, index=False)

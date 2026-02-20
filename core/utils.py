@@ -76,35 +76,34 @@ class FetchFromKaggle:
     
 class PlotHistory(object):
     """
-Utility class for visualizing training history of TensorFlow / Keras models.
+    Utility class for visualizing training history of TensorFlow / Keras models.
 
-This class provides a lightweight wrapper around a `tf.keras.callbacks.History`
-object and generates interactive loss curves using Plotly. It is intended for
-quick inspection of training dynamics such as convergence behavior and
-overfitting.
+    This class provides a lightweight wrapper around a `tf.keras.callbacks.History`
+    object and generates interactive loss curves using Plotly. It is intended for
+    quick inspection of training dynamics such as convergence behavior and
+    overfitting.
 
-Currently supported metrics:
-- Training loss (`loss`)
-- Validation loss (`val_loss`), if available
+    Currently supported metrics:
+    - Training loss (`loss`)
+    - Validation loss (`val_loss`), if available
 
-The visualization is rendered as an interactive Plotly figure with epoch-wise
-traces, suitable for exploratory analysis in notebooks or local development
-environments.
+    The visualization is rendered as an interactive Plotly figure with epoch-wise
+    traces, suitable for exploratory analysis in notebooks or local development
+    environments.
 
-Parameters
-----------
-history : tf.keras.callbacks.History, optional
-    History object returned by `model.fit`. Must contain a `history` attribute
-    with recorded loss values.
+    Parameters
+    ----------
+    history : tf.keras.callbacks.History, optional
+        History object returned by `model.fit`. Must contain a `history` attribute
+        with recorded loss values.
 
-Notes
------
-- This utility assumes that the model was compiled with a loss function.
-- Validation loss is plotted only if `val_loss` is present in the history.
-- The class does not perform input validation and will raise an error if an
-    invalid or incomplete History object is provided.
-- Intended for visualization only; it does not return numerical results.
-"""
+    Notes
+    -----
+    - This utility assumes that the model was compiled with a loss function.
+    - Validation loss is plotted only if `val_loss` is present in the history.
+    - The class does not perform input validation and will raise an error if an
+        invalid or incomplete History object is provided.
+    - Intended for visualization only; it does not return numerical results."""
     def __init__(self, history: tf.keras.callbacks.History = None):
         self.history = history
     def plot_history(self):
@@ -171,3 +170,70 @@ class PrepareLabels:
 
         logger.info("Labels created: %s rows", len(label_df))
         return label_df
+    
+class FetchRawFeatures:
+    def __init__(self, conn: sqlite3.Connection):
+        self.conn = conn
+    def _load_spot_prices(self) -> pd.DataFrame:
+        """Load and prepare LME Aluminum spot prices."""
+        query = """
+            SELECT
+                date AS ssd,
+                CAST(lme_al AS REAL) AS lme_al
+            FROM "lme-aluminum-spot-prices"
+            ORDER BY date
+        """
+        df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        logger.info("Spot prices loaded: %s rows", len(df))
+        return df
+    def _load_gfinance_index(self) -> pd.DataFrame:
+        """Load and prepare Google Finance data."""
+        query = """
+            SELECT
+                date AS ssd,
+                "index",
+                CAST(index_value AS REAL) AS index_value
+            FROM "google-finance-index"
+            WHERE "index"!="alcoa_corp_stocks"
+            ORDER BY date
+        """
+        df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        logger.info("Google Finance data loaded: %s rows", len(df))
+        df = df.pivot_table(index="ssd", columns="index", values="index_value", aggfunc="mean").reset_index().sort_values("ssd").reset_index(drop=True)
+        logger.info("Google Finance data pivoted: %s rows", len(df))
+        df = df.ffill().bfill()
+        logger.info("Few data points filled")
+        return df
+    def _load_inventory_level(self) -> pd.DataFrame:
+        """Load and prepare LME Aluminum inventory data"""
+        query = """
+            SELECT
+                date AS ssd,
+                CAST(lme_al_inventory AS REAL) AS lme_al_inventory
+            FROM "lme-aluminum-daily-inventory"
+            ORDER BY date
+        """
+        df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        logger.info("LME Aluminum Inventory data loaded: %s rows", len(df))
+        return df
+    def _load_baltic_index(self) -> pd.DataFrame:
+        """Load and prepare LME Aluminum inventory data"""
+        query = """
+            SELECT
+                date AS ssd,
+                CAST(baltic_dry_index AS REAL) AS baltic_dry_index
+            FROM "baltic-dry-index"
+            ORDER BY date
+        """
+        df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        logger.info("Baltic Dry index data loaded: %s rows", len(df))
+        return df
+    def fetch(self) -> pd.DataFrame:
+        spot = self._load_spot_prices()
+        gf = self._load_gfinance_index()
+        inv = self._load_inventory_level()
+        bal = self._load_baltic_index()
+
+        df = spot.merge(gf, on="ssd", how="outer").merge(inv, on="ssd", how="outer").merge(bal, on="ssd", how="outer").ffill().bfill()
+        logger.info(f"All raw features merged - {df.shape}")
+        return df
