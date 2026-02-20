@@ -1,5 +1,9 @@
 # Autonomous Metal
 
+## 🚧 Project Status
+
+**This project is currently under active development.**
+
 ## Context
 
 The price of **LME Aluminum (USD/MT)** is influenced by a constant stream of global events such as:
