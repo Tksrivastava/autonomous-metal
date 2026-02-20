@@ -2,7 +2,6 @@ import sqlite3
 from pathlib import Path
 from typing import Final
 
-import pandas as pd
 
 from core.logging import LoggerFactory
 from core.utils import FetchFromKaggle, PrepareLabels

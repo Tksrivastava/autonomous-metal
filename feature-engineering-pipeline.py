@@ -2,7 +2,6 @@ import sqlite3
 from pathlib import Path
 from typing import Final
 
-import pandas as pd
 
 from core.logging import LoggerFactory
 from core.utils import FetchFromKaggle, FetchRawFeatures
@@ -27,6 +26,6 @@ if __name__ == "__main__":
         raw_features = FetchRawFeatures(conn=conn)
 
     features = raw_features.fetch()
-    
+
     logger.info(f"Saving raw features to dataset to {FEATURE_PATH}")
     features.to_csv(FEATURE_PATH, index=False)

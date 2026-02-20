@@ -77,7 +77,14 @@ class AutonomusForecastModelArchitecture:
     The model performs direct multi-horizon forecasting, meaning all future
     steps are predicted simultaneously rather than recursively, reducing
     error accumulation during inference."""
-    def __init__(self, seed: int, input_horizon_space: int, input_feature_space: int, output_horizon_space: int):
+
+    def __init__(
+        self,
+        seed: int,
+        input_horizon_space: int,
+        input_feature_space: int,
+        output_horizon_space: int,
+    ):
         self._set_seed(seed)
         self._disable_cuda()
 
@@ -104,31 +111,52 @@ class AutonomusForecastModelArchitecture:
         tf.config.set_visible_devices([], "GPU")
 
     def _build_model(self) -> tf.keras.models.Model:
-        inp = tf.keras.layers.Input(shape=(self.input_horizon_space, self.input_feature_space,), name="input_space")
-        
-        x = tf.keras.layers.Conv1D(filters=12, kernel_size=3, padding="same", activation="gelu", dilation_rate=2)(inp)
-        x = tf.keras.layers.Conv1D(filters=6, kernel_size=3, padding="same", activation="gelu", dilation_rate=1)(x)
+        inp = tf.keras.layers.Input(
+            shape=(
+                self.input_horizon_space,
+                self.input_feature_space,
+            ),
+            name="input_space",
+        )
+
+        x = tf.keras.layers.Conv1D(
+            filters=12,
+            kernel_size=3,
+            padding="same",
+            activation="gelu",
+            dilation_rate=2,
+        )(inp)
+        x = tf.keras.layers.Conv1D(
+            filters=6, kernel_size=3, padding="same", activation="gelu", dilation_rate=1
+        )(x)
         x = tf.keras.layers.LayerNormalization()(x)
         x = tf.keras.layers.GlobalAveragePooling1D()(x)
         x = tf.keras.layers.Dense(10, activation="leaky_relu")(x)
         x = tf.keras.layers.Dropout(0.2)(x)
-        
-        out = tf.keras.layers.Dense(self.output_horizon_space, activation="linear", name="final_forecasting_space")(x)
-        
+
+        out = tf.keras.layers.Dense(
+            self.output_horizon_space,
+            activation="linear",
+            name="final_forecasting_space",
+        )(x)
+
         return tf.keras.models.Model(inputs=inp, outputs=out, name="forecast_model")
 
     def _compile_model(self):
-        self.model.compile(optimizer='adam', loss='mse')
-    
+        self.model.compile(optimizer="adam", loss="mse")
+
     def summary(self):
         return self.model.summary()
 
     def fit(self, x, y, **kwargs):
-        return self.model.fit(x, y, 
-                              callbacks=tf.keras.callbacks.EarlyStopping(monitor="val_loss",
-                                                                         patience=5,
-                                                                         restore_best_weights=True), 
-                               **kwargs)
+        return self.model.fit(
+            x,
+            y,
+            callbacks=tf.keras.callbacks.EarlyStopping(
+                monitor="val_loss", patience=5, restore_best_weights=True
+            ),
+            **kwargs,
+        )
 
     def predict(self, x):
         return self.model.predict(x)
@@ -144,7 +172,7 @@ class AutonomusForecastModelArchitecture:
             seed=0,
             input_horizon_space=model.input_shape[1],
             input_feature_space=model.input_shape[2],
-            output_horizon_space=model.output_shape[1]
+            output_horizon_space=model.output_shape[1],
         )
 
         obj.model = model

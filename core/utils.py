@@ -19,6 +19,7 @@ ENV_PATH = f"{FILE_PATH}/.env"
 load_dotenv(dotenv_path=ENV_PATH)
 logger.info("Environment variables loaded from .env")
 
+
 class FetchFromKaggle:
     """
     Handles authentication and dataset download from Kaggle.
@@ -35,6 +36,7 @@ class FetchFromKaggle:
 
     def __init__(self):
         from kaggle.api.kaggle_api_extended import KaggleApi
+
         self.logger = logger
         self.api = KaggleApi()
 
@@ -73,7 +75,8 @@ class FetchFromKaggle:
         )
 
         self.logger.info("Dataset downloaded and extracted successfully")
-    
+
+
 class PlotHistory(object):
     """
     Utility class for visualizing training history of TensorFlow / Keras models.
@@ -104,29 +107,49 @@ class PlotHistory(object):
     - The class does not perform input validation and will raise an error if an
         invalid or incomplete History object is provided.
     - Intended for visualization only; it does not return numerical results."""
+
     def __init__(self, history: tf.keras.callbacks.History = None):
         self.history = history
+
     def plot_history(self):
         hist = self.history.history
-        epochs = list(range(1, len(hist['loss']) + 1))
+        epochs = list(range(1, len(hist["loss"]) + 1))
 
         fig = go.Figure()
 
         # Training loss
-        fig.add_trace(go.Scatter(x=epochs, y=hist['loss'], mode='lines+markers', name='Train Loss'))
+        fig.add_trace(
+            go.Scatter(
+                x=epochs, y=hist["loss"], mode="lines+markers", name="Train Loss"
+            )
+        )
 
         # Validation loss (if exists)
-        if 'val_loss' in hist:
-            fig.add_trace(go.Scatter(x=epochs, y=hist['val_loss'], mode='lines+markers', name='Validation Loss'))
+        if "val_loss" in hist:
+            fig.add_trace(
+                go.Scatter(
+                    x=epochs,
+                    y=hist["val_loss"],
+                    mode="lines+markers",
+                    name="Validation Loss",
+                )
+            )
 
-        fig.update_layout(title='History', xaxis_title='Epoch',
-                        yaxis_title='Loss', template='plotly_white', hovermode='x unified')
+        fig.update_layout(
+            title="History",
+            xaxis_title="Epoch",
+            yaxis_title="Loss",
+            template="plotly_white",
+            hovermode="x unified",
+        )
         fig.show()
         return fig
+
 
 class PrepareLabels:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
+
     def _load_spot_prices(self) -> pd.DataFrame:
         """Load and prepare LME Aluminum spot prices."""
         query = """
@@ -137,9 +160,10 @@ class PrepareLabels:
             ORDER BY date
         """
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
-        df = df.groupby("ssd", as_index=False).agg({"lme_al":"mean"})
+        df = df.groupby("ssd", as_index=False).agg({"lme_al": "mean"})
         logger.info("Spot prices loaded: %s rows", len(df))
         return df
+
     def build_labels(self, horizon: int) -> pd.DataFrame:
         """
         Create future return labels for given horizon.
@@ -157,13 +181,15 @@ class PrepareLabels:
             future_price = df["lme_al"].shift(-days)
             future_date = df["ssd"].shift(-days)
 
-            temp = pd.DataFrame({
-                "ssd": df["ssd"],
-                "current_spot_price": df["lme_al"],
-                "predicted_for": future_date,
-                "days_ahead": days,
-                "y": (future_price - df["lme_al"]) / df["lme_al"],
-            })
+            temp = pd.DataFrame(
+                {
+                    "ssd": df["ssd"],
+                    "current_spot_price": df["lme_al"],
+                    "predicted_for": future_date,
+                    "days_ahead": days,
+                    "y": (future_price - df["lme_al"]) / df["lme_al"],
+                }
+            )
 
             records.append(temp)
 
@@ -171,10 +197,12 @@ class PrepareLabels:
 
         logger.info("Labels created: %s rows", len(label_df))
         return label_df
-    
+
+
 class FetchRawFeatures:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
+
     def _load_spot_prices(self) -> pd.DataFrame:
         """Load and prepare LME Aluminum spot prices."""
         query = """
@@ -185,9 +213,10 @@ class FetchRawFeatures:
             ORDER BY date
         """
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
-        df = df.groupby("ssd", as_index=False).agg({"lme_al":"mean"})
+        df = df.groupby("ssd", as_index=False).agg({"lme_al": "mean"})
         logger.info("Spot prices loaded: %s rows", len(df))
         return df
+
     def _load_gfinance_index(self) -> pd.DataFrame:
         """Load and prepare Google Finance data."""
         query = """
@@ -201,11 +230,19 @@ class FetchRawFeatures:
         """
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
         logger.info("Google Finance data loaded: %s rows", len(df))
-        df = df.pivot_table(index="ssd", columns="index", values="index_value", aggfunc="mean").reset_index().sort_values("ssd").reset_index(drop=True)
+        df = (
+            df.pivot_table(
+                index="ssd", columns="index", values="index_value", aggfunc="mean"
+            )
+            .reset_index()
+            .sort_values("ssd")
+            .reset_index(drop=True)
+        )
         logger.info("Google Finance data pivoted: %s rows", len(df))
         df = df.ffill().bfill()
         logger.info("Few data points filled")
         return df
+
     def _load_inventory_level(self) -> pd.DataFrame:
         """Load and prepare LME Aluminum inventory data"""
         query = """
@@ -218,6 +255,7 @@ class FetchRawFeatures:
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
         logger.info("LME Aluminum Inventory data loaded: %s rows", len(df))
         return df
+
     def _load_baltic_index(self) -> pd.DataFrame:
         """Load and prepare LME Aluminum inventory data"""
         query = """
@@ -230,12 +268,19 @@ class FetchRawFeatures:
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
         logger.info("Baltic Dry index data loaded: %s rows", len(df))
         return df
+
     def fetch(self) -> pd.DataFrame:
         spot = self._load_spot_prices()
         gf = self._load_gfinance_index()
         inv = self._load_inventory_level()
         bal = self._load_baltic_index()
 
-        df = spot.merge(gf, on="ssd", how="outer").merge(inv, on="ssd", how="outer").merge(bal, on="ssd", how="outer").ffill().bfill()
+        df = (
+            spot.merge(gf, on="ssd", how="outer")
+            .merge(inv, on="ssd", how="outer")
+            .merge(bal, on="ssd", how="outer")
+            .ffill()
+            .bfill()
+        )
         logger.info(f"All raw features merged - {df.shape}")
         return df

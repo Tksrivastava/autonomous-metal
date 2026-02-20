@@ -17,7 +17,7 @@ if __name__ == "__main__":
     y = pd.read_csv(LABEL_PATH)
     logger.info(f"Features and Label dataset fetched - {x.shape}, {y.shape}")
 
-    y = y.loc[y.ssd<"2025-01-01"].copy()
+    y = y.loc[y.ssd < "2025-01-01"].copy()
     logger.info(f"Training data duration - {y.ssd.min()} - {y.ssd.max()}")
 
     x_train, y_train = [], []
@@ -29,11 +29,7 @@ if __name__ == "__main__":
             .drop(columns=["ssd"])
             .to_numpy()
         )
-        temp_y = (
-            y.loc[y.ssd == ssd]
-            .sort_values("days_ahead")["y"]
-            .to_numpy()
-        )
+        temp_y = y.loc[y.ssd == ssd].sort_values("days_ahead")["y"].to_numpy()
         if temp_x.shape[0] == 10:
             x_train.append(temp_x)
             y_train.append(temp_y)
@@ -42,4 +38,4 @@ if __name__ == "__main__":
     logger.info(f"Training data prepared - {x_train.shape}, {y_train.shape}")
 
     logger.info(f"Saving training dataset to {TRAINIGN_DATA_PATH}")
-    np.savez_compressed(TRAINIGN_DATA_PATH, X=x_train,y=y_train)
+    np.savez_compressed(TRAINIGN_DATA_PATH, X=x_train, y=y_train)
