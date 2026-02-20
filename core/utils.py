@@ -137,6 +137,7 @@ class PrepareLabels:
             ORDER BY date
         """
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        df = df.groupby("ssd", as_index=False).agg({"lme_al":"mean"})
         logger.info("Spot prices loaded: %s rows", len(df))
         return df
     def build_labels(self, horizon: int) -> pd.DataFrame:
@@ -184,6 +185,7 @@ class FetchRawFeatures:
             ORDER BY date
         """
         df = pd.read_sql(query, self.conn, parse_dates=["ssd"])
+        df = df.groupby("ssd", as_index=False).agg({"lme_al":"mean"})
         logger.info("Spot prices loaded: %s rows", len(df))
         return df
     def _load_gfinance_index(self) -> pd.DataFrame:

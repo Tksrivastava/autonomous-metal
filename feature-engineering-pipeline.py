@@ -28,5 +28,5 @@ if __name__ == "__main__":
 
     features = raw_features.fetch()
     
-    logger.info("Saving raw features to dataset path")
+    logger.info(f"Saving raw features to dataset to {FEATURE_PATH}")
     features.to_csv(FEATURE_PATH, index=False)

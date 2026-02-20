@@ -30,5 +30,5 @@ if __name__ == "__main__":
 
     label_df = prepare_labels.build_labels(HORIZON_DAYS)
 
-    logger.info("Saving labels to dataset path")
+    logger.info(f"Saving labels to dataset {LABEL_PATH}")
     label_df.to_csv(LABEL_PATH, index=False)
