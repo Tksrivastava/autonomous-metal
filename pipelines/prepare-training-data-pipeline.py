@@ -14,6 +14,7 @@ TRAINIGN_DATA_PATH: Final[Path] = BASE_DIR / "dataset" / "training-data.npz"
 
 if __name__ == "__main__":
     x = pd.read_csv(FEATURE_PATH)
+    x = x.sort_values("ssd").reset_index(drop=True)
     y = pd.read_csv(LABEL_PATH)
     logger.info(f"Features and Label dataset fetched - {x.shape}, {y.shape}")
 

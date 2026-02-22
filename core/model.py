@@ -114,7 +114,7 @@ class AutonomusForecastModelArchitecture:
     def _directional_penatly_mse(y_true, y_pred, sample_weight=None):
         se = tf.square(y_true - y_pred)
         directional_penalty = tf.keras.activations.relu(-y_true * y_pred)
-        loss = se + 0.5 * directional_penalty
+        loss = se + directional_penalty
         return tf.reduce_mean(loss)
 
     def _build_model(self) -> tf.keras.models.Model:
@@ -127,17 +127,12 @@ class AutonomusForecastModelArchitecture:
         )
 
         x = tf.keras.layers.Conv1D(
-            filters=12, kernel_size=5, padding="same", activation="gelu"
+            filters=6, kernel_size=5, activation="tanh", use_bias=False
         )(inp)
-        x = tf.keras.layers.Conv1D(
-            filters=6, kernel_size=5, padding="same", activation="gelu"
-        )(x)
-        x = tf.keras.layers.Conv1D(
-            filters=3, kernel_size=5, padding="same", activation="gelu"
-        )(x)
         x = tf.keras.layers.LayerNormalization()(x)
         x = tf.keras.layers.GlobalAveragePooling1D()(x)
-        x = tf.keras.layers.Dropout(0.2)(x)
+
+        x = tf.keras.layers.Concatenate()([x, tf.keras.layers.Flatten()(inp)])
 
         out = tf.keras.layers.Dense(
             self.output_horizon_space,

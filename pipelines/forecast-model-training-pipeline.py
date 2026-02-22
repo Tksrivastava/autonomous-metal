@@ -71,7 +71,7 @@ def main() -> None:
     logger.info("Starting model training")
 
     history = model.fit(
-        x=x, y=y, epochs=15, batch_size=300, validation_split=0.35, shuffle=False
+        x=x, y=y, epochs=30, batch_size=300, validation_split=0.35, shuffle=False
     )
 
     for epoch in range(len(history.history["loss"])):
