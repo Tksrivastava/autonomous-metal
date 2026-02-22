@@ -28,12 +28,16 @@ class Retriever:
         chunk_size: int = 400,
         chunk_overlap: int = 80,
         top_match: int = 1,
+        relevence_threshold: float = 0.7,
+        relevent_candidates: int = 10,
         embedding_model: Optional[str] = None,
     ):
         self.df = df
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.top_match = top_match
+        self.relevence_threshold = relevence_threshold
+        self.relevent_candidates = relevent_candidates
         self.model_name = embedding_model or os.getenv("EMBEDDING_MODEL")
         self.embedding = None
         self.splitter = None
@@ -87,7 +91,12 @@ class Retriever:
         self.chunks = self._chunk_documents(self.corpus)
 
         self.retriver = FAISS.from_documents(self.chunks, self.embedding).as_retriever(
-            search_kwargs={"k": self.top_match}
+            search_type="mmr",
+            search_kwargs={
+                "k": self.top_match,
+                "fetch_k": self.relevent_candidates,
+                "lambda_mult": self.relevence_threshold,
+            },
         )
         logger.info("Retriever build complete")
         return self.retriver
