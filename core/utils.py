@@ -2,6 +2,7 @@ import os
 import sqlite3
 import tensorflow as tf
 from pathlib import Path
+from typing import Final
 import plotly.graph_objects as go
 
 import pandas as pd
@@ -14,8 +15,8 @@ logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
 
 
-FILE_PATH = Path(__file__).resolve().parent.parent
-ENV_PATH = f"{FILE_PATH}/.env"
+FILE_PATH: Final[Path] = Path(__file__).resolve().parent.parent
+ENV_PATH: Final[Path] = f"{FILE_PATH}/.env"
 load_dotenv(dotenv_path=ENV_PATH)
 logger.info("Environment variables loaded from .env")
 
