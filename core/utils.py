@@ -14,7 +14,7 @@ logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
 
 
-FILE_PATH = Path(__file__).resolve().parents[1]
+FILE_PATH = Path(__file__).resolve().parent.parent
 ENV_PATH = f"{FILE_PATH}/.env"
 load_dotenv(dotenv_path=ENV_PATH)
 logger.info("Environment variables loaded from .env")

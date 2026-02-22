@@ -10,7 +10,7 @@ from core.utils import PrepareLabels
 logger = LoggerFactory().get_logger(__name__)
 
 
-BASE_DIR: Final[Path] = Path(__file__).resolve().parent
+BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 DATASET_PATH: Final[Path] = BASE_DIR / "dataset" / "autonomous-metal-db.db"
 LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
 HORIZON_DAYS: Final[int] = 5

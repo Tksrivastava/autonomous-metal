@@ -10,7 +10,7 @@ from core.utils import FetchRawFeatures
 logger = LoggerFactory().get_logger(__name__)
 
 
-BASE_DIR: Final[Path] = Path(__file__).resolve().parent
+BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 DATASET_PATH: Final[Path] = BASE_DIR / "dataset" / "autonomous-metal-db.db"
 FEATURE_PATH: Final[Path] = BASE_DIR / "dataset" / "features.csv"
 

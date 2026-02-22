@@ -15,12 +15,12 @@ logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
 
 
-BASE_DIR: Final[Path] = Path(__file__).resolve().parent
+BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 TRAINIGN_DATA_PATH: Final[Path] = BASE_DIR / "dataset" / "training-data.npz"
 ARTIFACT_PATH: Final[Path] = BASE_DIR / "artifacts"
 
 SCALER_PATH: Final[Path] = ARTIFACT_PATH / "feature-scaler.pkl"
-MODEL_PATH: Final[Path] = ARTIFACT_PATH / "autoencoder-model.keras"
+MODEL_PATH: Final[Path] = ARTIFACT_PATH / "lme-al-forecast-model.keras"
 PLOT_PATH: Final[Path] = ARTIFACT_PATH / "loss-plot.png"
 
 os.makedirs(ARTIFACT_PATH, exist_ok=True)
