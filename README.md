@@ -66,7 +66,7 @@ Each stage is intentionally separated to mirror production-grade ML workflows an
 
 ### 1️⃣ Kaggle Data Fetch Pipeline
 
-**`fetch-data-kaggle-pipeline.py`**
+**`pipelines/fetch-data-kaggle-pipeline.py`**
 
 Downloads the required dataset from Kaggle and prepares the local data directory.
 
@@ -74,7 +74,7 @@ Downloads the required dataset from Kaggle and prepares the local data directory
 
 ### 2️⃣ Label Preparation Pipeline
 
-**`label-preparation-pipeline.py`**
+**`pipelines/label-preparation-pipeline.py`**
 
 Defines the supervised learning problem by:
 
@@ -90,7 +90,7 @@ This stage formalizes how price forecasting is framed.
 
 > Mandetory to execute before running any other script/.sh/dockerfile# 3️⃣ Training Data Preparation
 
-**`prepare-training-data-pipeline.py`**
+**`pipelines/prepare-training-data-pipeline.py`**
 
 Responsible for:
 
@@ -105,7 +105,7 @@ Acts as the data integration layer.
 
 ### 4️⃣ Feature Engineering Pipeline
 
-**`feature-engineering-pipeline.py`**
+**`pipelines/feature-engineering-pipeline.py`**
 
 Transforms raw inputs into predictive signals through:
 
@@ -119,7 +119,7 @@ This stage captures market structure used by the forecasting model.
 
 ### 5️⃣ Forecast Model Training Pipeline
 
-**`forecast-model-training-pipeline.py`**
+**`pipelines/forecast-model-training-pipeline.py`**
 
 Handles:
 
