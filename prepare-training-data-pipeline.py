@@ -23,7 +23,7 @@ if __name__ == "__main__":
     x_train, y_train = [], []
     for ssd in y.ssd.unique():
         temp_x = (
-            x.loc[x.ssd < ssd]
+            x.loc[x.ssd <= ssd]
             .reset_index(drop=True)
             .iloc[-10:]
             .drop(columns=["ssd"])

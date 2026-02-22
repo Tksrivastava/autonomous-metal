@@ -21,8 +21,6 @@ class AutonomusForecastModelArchitecture:
     Key design characteristics
     --------------------------
     - Temporal feature extraction using Conv1D layers
-    - Dilated convolutions to expand temporal receptive field without
-    increasing parameter count
     - GELU nonlinearities for smooth gradient propagation
     - Layer normalization for training stability
     - Dense projection head for multi-step forecasting
@@ -110,6 +108,13 @@ class AutonomusForecastModelArchitecture:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         tf.config.set_visible_devices([], "GPU")
 
+    @staticmethod
+    def _directional_penatly_mse(y_true, y_pred, sample_weight=None):
+        se = tf.square(y_true - y_pred)
+        directional_penalty = tf.keras.activations.relu(-y_true * y_pred)
+        loss = se + 0.5 * directional_penalty
+        return tf.reduce_mean(loss)
+
     def _build_model(self) -> tf.keras.models.Model:
         inp = tf.keras.layers.Input(
             shape=(
@@ -120,18 +125,16 @@ class AutonomusForecastModelArchitecture:
         )
 
         x = tf.keras.layers.Conv1D(
-            filters=12,
-            kernel_size=3,
-            padding="same",
-            activation="gelu",
-            dilation_rate=2,
+            filters=12, kernel_size=5, padding="same", activation="gelu"
         )(inp)
         x = tf.keras.layers.Conv1D(
-            filters=6, kernel_size=3, padding="same", activation="gelu", dilation_rate=1
+            filters=6, kernel_size=5, padding="same", activation="gelu"
+        )(x)
+        x = tf.keras.layers.Conv1D(
+            filters=3, kernel_size=5, padding="same", activation="gelu"
         )(x)
         x = tf.keras.layers.LayerNormalization()(x)
         x = tf.keras.layers.GlobalAveragePooling1D()(x)
-        x = tf.keras.layers.Dense(10, activation="leaky_relu")(x)
         x = tf.keras.layers.Dropout(0.2)(x)
 
         out = tf.keras.layers.Dense(
@@ -143,7 +146,11 @@ class AutonomusForecastModelArchitecture:
         return tf.keras.models.Model(inputs=inp, outputs=out, name="forecast_model")
 
     def _compile_model(self):
-        self.model.compile(optimizer="adam", loss="mse")
+        self.model.compile(
+            optimizer="adam",
+            loss=AutonomusForecastModelArchitecture._directional_penatly_mse,
+            metrics=["mse"],
+        )
 
     def summary(self):
         return self.model.summary()
@@ -166,7 +173,12 @@ class AutonomusForecastModelArchitecture:
 
     @classmethod
     def load(cls, path: str) -> "AutonomusForecastModelArchitecture":
-        model = tf.keras.models.load_model(path)
+        model = tf.keras.models.load_model(
+            path,
+            custom_objects={
+                "loss": AutonomusForecastModelArchitecture._directional_penatly_mse
+            },
+        )
 
         obj = cls(
             seed=0,
