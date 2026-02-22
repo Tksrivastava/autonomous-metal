@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from typing import List, Optional
 from langchain.schema import Document
 from core.logging import LoggerFactory
+from core.utils import RAGQuestionnaire
 from langchain_community.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -28,7 +29,7 @@ class Retriever:
         chunk_size: int = 400,
         chunk_overlap: int = 80,
         top_match: int = 1,
-        relevence_threshold: float = 0.7,
+        relevence_diversity_mix: float = 0.7,
         relevent_candidates: int = 10,
         embedding_model: Optional[str] = None,
     ):
@@ -36,7 +37,7 @@ class Retriever:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.top_match = top_match
-        self.relevence_threshold = relevence_threshold
+        self.relevence_diversity_mix = relevence_diversity_mix
         self.relevent_candidates = relevent_candidates
         self.model_name = embedding_model or os.getenv("EMBEDDING_MODEL")
         self.embedding = None
@@ -81,7 +82,7 @@ class Retriever:
         logger.info(f"Documents chunked: {len(chunks)} chunks")
         return chunks
 
-    def create_retirver(self) -> VectorStoreRetriever:
+    def _create_retirver(self) -> VectorStoreRetriever:
         logger.info("Building retriever pipeline...")
 
         self._init_embedding()
@@ -95,8 +96,30 @@ class Retriever:
             search_kwargs={
                 "k": self.top_match,
                 "fetch_k": self.relevent_candidates,
-                "lambda_mult": self.relevence_threshold,
+                "lambda_mult": self.relevence_diversity_mix,
             },
         )
         logger.info("Retriever build complete")
         return self.retriver
+
+    def _get_relevent_articles(self) -> pd.DataFrame:
+        logger.info("Getting relevent articles")
+
+        self._create_retirver()
+        questions = RAGQuestionnaire.question_set
+
+        rows = []
+        for domain, qs in questions.items():
+            logger.info(f"Querying {domain} for relevent articles")
+            for q in qs:
+                results = self.retriver.invoke(input=q)
+
+                rows.extend(
+                    {
+                        "link": r.metadata["article_link"],
+                        "domain": domain,
+                        "question": q,
+                    }
+                    for r in results
+                )
+        return pd.DataFrame(rows)
