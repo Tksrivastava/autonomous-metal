@@ -64,7 +64,15 @@ Each stage is intentionally separated to mirror production-grade ML workflows an
 
 ## ⚙️ Implemented Pipelines
 
-### 1️⃣ Label Preparation Pipeline
+### 1️⃣ Kaggle Data Fetch Pipeline
+
+**`fetch-data-kaggle-pipeline.py`**
+
+Downloads the required dataset from Kaggle and prepares the local data directory.
+
+>⚠️ Mandatory step: Run this before executing any scripts, setup commands, or Docker builds.
+
+### 2️⃣ Label Preparation Pipeline
 
 **`label-preparation-pipeline.py`**
 
@@ -78,7 +86,9 @@ This stage formalizes how price forecasting is framed.
 
 ---
 
-### 2️⃣ Training Data Preparation
+##Downloads data from Kaggle website.
+
+> Mandetory to execute before running any other script/.sh/dockerfile# 3️⃣ Training Data Preparation
 
 **`prepare-training-data-pipeline.py`**
 
@@ -93,7 +103,7 @@ Acts as the data integration layer.
 
 ---
 
-### 3️⃣ Feature Engineering Pipeline
+### 4️⃣ Feature Engineering Pipeline
 
 **`feature-engineering-pipeline.py`**
 
@@ -107,7 +117,7 @@ This stage captures market structure used by the forecasting model.
 
 ---
 
-### 4️⃣ Forecast Model Training Pipeline
+### 5️⃣ Forecast Model Training Pipeline
 
 **`forecast-model-training-pipeline.py`**
 
@@ -129,6 +139,7 @@ autonomous-metal/
 ├── core/                         # Shared utilities and data logic
 ├── artifacts/                    # Generated outputs and intermediates
 │
+├── fetch-data-kaggle-pipeline.py
 ├── label-preparation-pipeline.py
 ├── prepare-training-data-pipeline.py
 ├── feature-engineering-pipeline.py
@@ -146,7 +157,6 @@ autonomous-metal/
 
 * Historical LME Aluminum prices
 * 14 raw market drivers
-* Engineered time-series features
 
 ---
 

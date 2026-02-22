@@ -2,6 +2,7 @@ import os
 import random
 import numpy as np
 import tensorflow as tf
+from keras.saving import register_keras_serializable
 
 
 class AutonomusForecastModelArchitecture:
@@ -109,6 +110,7 @@ class AutonomusForecastModelArchitecture:
         tf.config.set_visible_devices([], "GPU")
 
     @staticmethod
+    @register_keras_serializable(package="Autonomous")
     def _directional_penatly_mse(y_true, y_pred, sample_weight=None):
         se = tf.square(y_true - y_pred)
         directional_penalty = tf.keras.activations.relu(-y_true * y_pred)
@@ -173,12 +175,7 @@ class AutonomusForecastModelArchitecture:
 
     @classmethod
     def load(cls, path: str) -> "AutonomusForecastModelArchitecture":
-        model = tf.keras.models.load_model(
-            path,
-            custom_objects={
-                "loss": AutonomusForecastModelArchitecture._directional_penatly_mse
-            },
-        )
+        model = tf.keras.models.load_model(path)
 
         obj = cls(
             seed=0,

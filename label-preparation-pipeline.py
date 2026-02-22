@@ -4,7 +4,7 @@ from typing import Final
 
 
 from core.logging import LoggerFactory
-from core.utils import FetchFromKaggle, PrepareLabels
+from core.utils import PrepareLabels
 
 
 logger = LoggerFactory().get_logger(__name__)
@@ -18,9 +18,6 @@ HORIZON_DAYS: Final[int] = 5
 
 if __name__ == "__main__":
     logger.info("Starting label preparation pipeline")
-
-    logger.info("Ensuring dataset availability via Kaggle fetch")
-    FetchFromKaggle().download()
 
     logger.info("Connecting to database: %s", DATASET_PATH)
 
