@@ -112,12 +112,12 @@ class AutonomusForecastModelArchitecture:
     @staticmethod
     @register_keras_serializable(package="Autonomous")
     def _directional_penatly_loss(y_true, y_pred, sample_weight=None):
-        huber = tf.keras.losses.huber(y_true, y_pred, delta=1.0)
-        alignment = y_true * y_pred
-        direction_penalty = tf.nn.relu(-alignment)
-        confidence_penalty = tf.square(tf.keras.activations.relu(-alignment))
-        loss = huber + 2.0 * direction_penalty + 5.0 * confidence_penalty
-        return tf.reduce_mean(loss)
+        mse = tf.keras.losses.mean_squared_error(y_true, y_pred)
+        da = tf.reduce_mean(
+            tf.cast(tf.equal(tf.sign(y_true), tf.sign(y_pred)), tf.float32)
+        )
+        inv_da = tf.where(tf.equal(da, 0.0), 1e12, 1.0 / da)
+        return mse * inv_da
 
     def _build_model(self) -> tf.keras.models.Model:
         inp = tf.keras.layers.Input(
@@ -165,7 +165,7 @@ class AutonomusForecastModelArchitecture:
             x,
             y,
             callbacks=tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=3, restore_best_weights=True
+                monitor="val_loss", patience=10, restore_best_weights=True
             ),
             **kwargs,
         )

@@ -71,8 +71,8 @@ if __name__ == "__main__":
         history = model.fit(
             x=x,
             y=horizon_y,
-            epochs=10,
-            batch_size=300,
+            epochs=500,
+            batch_size=20,
             validation_split=0.25,
             shuffle=True,
         )
