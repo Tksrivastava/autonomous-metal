@@ -29,16 +29,16 @@ class Retriever:
         chunk_size: int = 400,
         chunk_overlap: int = 80,
         top_match: int = 1,
-        relevence_diversity_mix: float = 0.7,
-        relevent_candidates: int = 10,
+        relevance_diversity_mix: float = 0.7,
+        relevant_candidates: int = 10,
         embedding_model: Optional[str] = None,
     ):
         self.df = df
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.top_match = top_match
-        self.relevence_diversity_mix = relevence_diversity_mix
-        self.relevent_candidates = relevent_candidates
+        self.relevance_diversity_mix = relevance_diversity_mix
+        self.relevant_candidates = relevant_candidates
         self.model_name = embedding_model or os.getenv("EMBEDDING_MODEL")
         self.embedding = None
         self.splitter = None
@@ -82,7 +82,7 @@ class Retriever:
         logger.info(f"Documents chunked: {len(chunks)} chunks")
         return chunks
 
-    def _create_retirver(self) -> VectorStoreRetriever:
+    def _create_retriever(self) -> VectorStoreRetriever:
         logger.info("Building retriever pipeline...")
 
         self._init_embedding()
@@ -91,28 +91,28 @@ class Retriever:
         self.corpus = self._create_corpus()
         self.chunks = self._chunk_documents(self.corpus)
 
-        self.retriver = FAISS.from_documents(self.chunks, self.embedding).as_retriever(
+        self.retriever = FAISS.from_documents(self.chunks, self.embedding).as_retriever(
             search_type="mmr",
             search_kwargs={
                 "k": self.top_match,
-                "fetch_k": self.relevent_candidates,
-                "lambda_mult": self.relevence_diversity_mix,
+                "fetch_k": self.relevant_candidates,
+                "lambda_mult": self.relevance_diversity_mix,
             },
         )
         logger.info("Retriever build complete")
-        return self.retriver
+        return self.retriever
 
-    def _get_relevent_articles(self) -> pd.DataFrame:
-        logger.info("Getting relevent articles")
+    def _get_relevant_articles(self) -> pd.DataFrame:
+        logger.info("Getting relevant articles")
 
-        self._create_retirver()
+        self._create_retriever()
         questions = RAGQuestionnaire.question_set
 
         rows = []
         for domain, qs in questions.items():
-            logger.info(f"Querying {domain} for relevent articles")
+            logger.info(f"Querying {domain} for relevant articles")
             for q in qs:
-                results = self.retriver.invoke(input=q)
+                results = self.retriever.invoke(input=q)
 
                 rows.extend(
                     {
