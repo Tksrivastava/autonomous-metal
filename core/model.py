@@ -111,10 +111,12 @@ class AutonomusForecastModelArchitecture:
 
     @staticmethod
     @register_keras_serializable(package="Autonomous")
-    def _directional_penatly_mse(y_true, y_pred, sample_weight=None):
-        se = tf.square(y_true - y_pred)
-        directional_penalty = tf.keras.activations.relu(-y_true * y_pred)
-        loss = se + directional_penalty
+    def _directional_penatly_loss(y_true, y_pred, sample_weight=None):
+        huber = tf.keras.losses.huber(y_true, y_pred, delta=1.0)
+        alignment = y_true * y_pred
+        direction_penalty = tf.nn.relu(-alignment)
+        confidence_penalty = tf.square(tf.keras.activations.relu(-alignment))
+        loss = huber + 2.0 * direction_penalty + 5.0 * confidence_penalty
         return tf.reduce_mean(loss)
 
     def _build_model(self) -> tf.keras.models.Model:
@@ -127,16 +129,22 @@ class AutonomusForecastModelArchitecture:
         )
 
         x = tf.keras.layers.Conv1D(
-            filters=6, kernel_size=5, activation="tanh", use_bias=False
+            filters=12, kernel_size=5, activation="gelu", use_bias=False
         )(inp)
         x = tf.keras.layers.LayerNormalization()(x)
-        x = tf.keras.layers.GlobalAveragePooling1D()(x)
 
-        x = tf.keras.layers.Concatenate()([x, tf.keras.layers.Flatten()(inp)])
+        x = tf.keras.layers.Concatenate()(
+            [
+                tf.keras.layers.GlobalAveragePooling1D()(x),
+                tf.keras.layers.GlobalMaxPooling1D()(x),
+            ]
+        )
+        x = tf.keras.layers.BatchNormalization()(x)
 
         out = tf.keras.layers.Dense(
             self.output_horizon_space,
-            activation="linear",
+            activation="tanh",
+            use_bias=False,
             name="final_forecasting_space",
         )(x)
 
@@ -145,7 +153,7 @@ class AutonomusForecastModelArchitecture:
     def _compile_model(self):
         self.model.compile(
             optimizer="adam",
-            loss=AutonomusForecastModelArchitecture._directional_penatly_mse,
+            loss=AutonomusForecastModelArchitecture._directional_penatly_loss,
             metrics=["mse"],
         )
 
@@ -157,7 +165,7 @@ class AutonomusForecastModelArchitecture:
             x,
             y,
             callbacks=tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=5, restore_best_weights=True
+                monitor="val_loss", patience=3, restore_best_weights=True
             ),
             **kwargs,
         )

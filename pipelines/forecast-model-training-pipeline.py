@@ -1,4 +1,3 @@
-import os
 import pickle
 from pathlib import Path
 from typing import Final
@@ -16,30 +15,28 @@ logger = logger_factory.get_logger(__name__)
 
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
-TRAINIGN_DATA_PATH: Final[Path] = BASE_DIR / "dataset" / "training-data.npz"
+TRAINING_X_PATH: Final[Path] = BASE_DIR / "dataset" / "training-x.npy"
+TRAINING_Y_PATH: Final[Path] = BASE_DIR / "dataset" / "training-y.npy"
 ARTIFACT_PATH: Final[Path] = BASE_DIR / "artifacts"
 
 SCALER_PATH: Final[Path] = ARTIFACT_PATH / "feature-scaler.pkl"
-MODEL_PATH: Final[Path] = ARTIFACT_PATH / "lme-al-forecast-model.keras"
-PLOT_PATH: Final[Path] = ARTIFACT_PATH / "loss-plot.png"
-
-os.makedirs(ARTIFACT_PATH, exist_ok=True)
-logger.debug("Artifacts directory ensured")
+MODEL_PATH: Final[Path] = ARTIFACT_PATH / "lme-al-forecast-model-%s-days-ahead.keras"
+PLOT_PATH: Final[Path] = ARTIFACT_PATH / "loss-plot-%s-days-ahead.png"
 
 
-def main() -> None:
+if __name__ == "__main__":
     logger.info("Starting autoencoder training pipeline")
 
     ARTIFACT_PATH.mkdir(parents=True, exist_ok=True)
     logger.info("Artifact directory ready: %s", ARTIFACT_PATH)
 
-    logger.info("Loading features from %s", TRAINIGN_DATA_PATH)
-    data = np.load(TRAINIGN_DATA_PATH)
+    logger.info("Loading x data from %s", TRAINING_X_PATH)
+    x = np.load(TRAINING_X_PATH)
 
-    x, y = data["X"], data["y"]
-    logger.info(f"Seperating x, y - {x.shape}, {y.shape}")
+    logger.info("Loading y data from %s", TRAINING_Y_PATH)
+    y = np.load(TRAINING_Y_PATH)
 
-    logger.info("Applying RobustScaler")
+    logger.info("Applying RobustScaler on X data")
     scaler = RobustScaler()
 
     n_samples, n_steps, n_features = x.shape
@@ -52,44 +49,45 @@ def main() -> None:
         pickle.dump(scaler, f)
     logger.info("Feature scaler saved to %s", SCALER_PATH)
 
-    logger.info(
-        "Initializing autoencoder | input_space=%d | latent_space=%d | seed=%d",
-        x.shape[1],
-        10,
-        42,
-    )
-
-    model = AutonomusForecastModelArchitecture(
-        seed=42,
-        input_horizon_space=n_steps,
-        input_feature_space=n_features,
-        output_horizon_space=y.shape[1],
-    )
-
-    model.summary()
-
-    logger.info("Starting model training")
-
-    history = model.fit(
-        x=x, y=y, epochs=30, batch_size=300, validation_split=0.35, shuffle=False
-    )
-
-    for epoch in range(len(history.history["loss"])):
-        metrics_str = " | ".join(
-            f"{metric}={values[epoch]:.6f}"
-            for metric, values in history.history.items()
+    logger.info("Training individual model for each future horizon")
+    for days_ahead in range(5):
+        horizon_y = y[:, days_ahead].reshape(-1, 1)
+        logger.info(
+            f"Filtered label data for {days_ahead+1} days ahead horizon - {horizon_y.shape}"
         )
-        logger.info(f"Epoch {epoch + 1:02d} | {metrics_str}")
 
-    logger.info("Training completed")
+        logger.info(
+            f"Initializing model | input_space={x.shape[1]} | output_space={horizon_y.shape[1]}"
+        )
+        model = AutonomusForecastModelArchitecture(
+            seed=42,
+            input_horizon_space=n_steps,
+            input_feature_space=n_features,
+            output_horizon_space=horizon_y.shape[1],
+        )
+        model.summary()
 
-    logger.info("Saving training history plot")
-    plot = PlotHistory(history=history).plot_history()
-    plot.write_image(PLOT_PATH)
+        logger.info("Starting model training")
+        history = model.fit(
+            x=x,
+            y=horizon_y,
+            epochs=10,
+            batch_size=300,
+            validation_split=0.25,
+            shuffle=True,
+        )
 
-    logger.info(f"Saving trained model to {MODEL_PATH}")
-    model.save(MODEL_PATH)
+        for epoch in range(len(history.history["loss"])):
+            metrics_str = " | ".join(
+                f"{metric}={values[epoch]:.6f}"
+                for metric, values in history.history.items()
+            )
+            logger.info(f"Epoch {epoch + 1:02d} | {metrics_str}")
+        logger.info("Training completed")
 
+        logger.info("Saving training history plot")
+        plot = PlotHistory(history=history).plot_history()
+        plot.write_image(str(PLOT_PATH) % str(days_ahead + 1))
 
-if __name__ == "__main__":
-    main()
+        logger.info(f"Saving trained model to {str(MODEL_PATH)%str(days_ahead+1)}")
+        model.save(str(MODEL_PATH) % str(days_ahead + 1))

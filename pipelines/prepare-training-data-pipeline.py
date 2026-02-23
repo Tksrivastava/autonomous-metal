@@ -10,7 +10,8 @@ logger = LoggerFactory().get_logger(__name__)
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
 FEATURE_PATH: Final[Path] = BASE_DIR / "dataset" / "features.csv"
-TRAINIGN_DATA_PATH: Final[Path] = BASE_DIR / "dataset" / "training-data.npz"
+TRAINING_X_PATH: Final[Path] = BASE_DIR / "dataset" / "training-x.npy"
+TRAINING_Y_PATH: Final[Path] = BASE_DIR / "dataset" / "training-y.npy"
 
 if __name__ == "__main__":
     x = pd.read_csv(FEATURE_PATH)
@@ -30,7 +31,7 @@ if __name__ == "__main__":
             .drop(columns=["ssd"])
             .to_numpy()
         )
-        temp_y = y.loc[y.ssd == ssd].sort_values("days_ahead")["y"].to_numpy()
+        temp_y = y.loc[(y.ssd == ssd)].sort_values("days_ahead")["y"].to_numpy()
         if temp_x.shape[0] == 10:
             x_train.append(temp_x)
             y_train.append(temp_y)
@@ -38,5 +39,6 @@ if __name__ == "__main__":
     y_train = np.array(y_train, dtype=np.float32)
     logger.info(f"Training data prepared - {x_train.shape}, {y_train.shape}")
 
-    logger.info(f"Saving training dataset to {TRAINIGN_DATA_PATH}")
-    np.savez_compressed(TRAINIGN_DATA_PATH, X=x_train, y=y_train)
+    logger.info(f"Saving training dataset to {TRAINING_X_PATH} and {TRAINING_Y_PATH}")
+    np.save(TRAINING_X_PATH, x_train)
+    np.save(TRAINING_Y_PATH, y_train)

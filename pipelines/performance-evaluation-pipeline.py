@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Final
 from core.logging import LoggerFactory
+from tensorflow.keras.backend import clear_session
 from core.model import AutonomusForecastModelArchitecture
 
 logger = LoggerFactory().get_logger(__name__)
@@ -12,8 +13,8 @@ BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
 FEATURE_PATH: Final[Path] = BASE_DIR / "dataset" / "features.csv"
 SCALER_MODEL_PATH: Final[Path] = BASE_DIR / "artifacts" / "feature-scaler.pkl"
-FORECAST_MODEL_PATH: Final[Path] = (
-    BASE_DIR / "artifacts" / "lme-al-forecast-model.keras"
+MODEL_PATH: Final[Path] = (
+    BASE_DIR / "artifacts" / "lme-al-forecast-model-%s-days-ahead.keras"
 )
 
 WINDOW = 10
@@ -21,10 +22,6 @@ WINDOW = 10
 
 if __name__ == "__main__":
     logger.info("Starting forecast performance evaluation pipeline")
-
-    logger.info(f"Loading model from - {FORECAST_MODEL_PATH}")
-    model = AutonomusForecastModelArchitecture.load(FORECAST_MODEL_PATH)
-    logger.info("Model loaded")
 
     logger.info(f"Loading scaler from - {SCALER_MODEL_PATH}")
     scaler = pickle.load(open(SCALER_MODEL_PATH, "rb"))
@@ -61,9 +58,19 @@ if __name__ == "__main__":
     windows_scaled = scaler.transform(windows_2d)
     windows_scaled = windows_scaled.reshape(n_samples, n_steps, n_features)
 
-    logger.info("Running batch prediction")
-    preds = model.predict(windows_scaled)
-    # preds shape -> (N_windows, forecast_horizon)
+    logger.info("Running batch prediction for each horizon")
+    preds = []
+    for days_ahead in range(5):
+        logger.info(f"Loading model from - {str(MODEL_PATH)%str(days_ahead+1)}")
+        model = AutonomusForecastModelArchitecture.load(
+            str(MODEL_PATH) % str(days_ahead + 1)
+        )
+        logger.info("Model loaded")
+        preds.append(model.predict(windows_scaled))
+
+        clear_session()
+        del model
+    preds = np.hstack(preds)
 
     horizon = preds.shape[1]
 
