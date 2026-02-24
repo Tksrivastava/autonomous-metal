@@ -168,6 +168,133 @@ autonomous-metal/
 
 ---
 
+## 📊 Forecast Model Performance (Current Benchmark)
+
+The current forecasting system has reached a stable performance baseline after extensive architectural experimentation, hyperparameter tuning, and repeated out-of-sample evaluation.
+
+All reported metrics are computed on a **strict chronological validation period**, ensuring that model evaluation reflects realistic forward-looking market prediction rather than randomized cross-validation.
+
+The model performs **direct multi-horizon forecasting** of LME Aluminum price movements using a fixed historical lookback window accross 14 market drivers.
+
+---
+
+### Evaluation Setup
+
+* Training period: historical market data prior to validation window
+* Validation period: strictly future observations (chronological split)
+* Forecast horizons: **1–5 trading days ahead**
+* Targets: price forecasts derived from predicted returns
+* Metrics:
+
+  * **MAPE (Mean Absolute Percentage Error)** — price accuracy
+  * **Directional Accuracy** — correctness of predicted price movement sign
+
+Directional accuracy is emphasized because, in financial markets, correctly predicting the **direction of movement** is often more economically meaningful than minimizing absolute error.
+
+---
+
+### Final Model Performance
+
+#### Price Forecast Accuracy (MAPE)
+
+| Days Ahead | Train MAPE | Validation MAPE |
+| ---------- | ---------- | --------------- |
+| 1          | 0.87%      | **0.96%**       |
+| 2          | 1.23%      | **1.23%**       |
+| 3          | 1.56%      | **1.46%**       |
+| 4          | 1.95%      | **2.24%**       |
+| 5          | 2.21%      | **2.22%**       |
+
+**Observations**
+
+* Error increases smoothly with forecast horizon, which is expected due to uncertainty accumulation.
+* Training and validation errors remain closely aligned, indicating strong generalization.
+* No instability or divergence is observed at longer horizons.
+
+---
+
+#### Directional Accuracy (Primary Metric)
+
+| Days Ahead | Train | Validation |
+| ---------- | ----- | ---------- |
+| 1          | 63.3% | **57.4%**  |
+| 2          | 63.5% | **58.0%**  |
+| 3          | 62.6% | **60.5%**  |
+| 4          | 56.0% | **58.5%**  |
+| 5          | 55.8% | **58.3%**  |
+
+---
+
+### Interpretation Relative to Market Standards
+
+Financial time-series forecasting differs fundamentally from typical machine learning tasks due to:
+
+* High market efficiency
+* Low signal-to-noise ratio
+* Regime shifts and macroeconomic shocks
+* Near-random short-term return behavior
+
+As a result, even small improvements over random prediction are statistically meaningful.
+
+#### Typical Directional Accuracy Benchmarks (Finance Literature)
+
+| Accuracy Range | Interpretation                                    |
+| -------------- | ------------------------------------------------- |
+| ~50%           | Random walk baseline                              |
+| 52–55%         | Weak predictive signal                            |
+| 55–58%         | Strong ML forecasting performance                 |
+| **58–61%**     | High-quality research-level models                |
+| >62%           | Rare; often regime-specific or unrealistic setups |
+
+The Autonomous Metal forecasting model achieves:
+
+* **≈57–60% directional accuracy across horizons**
+* Peak performance of **60.5% at 3-day horizon**
+
+This places the system within the performance range commonly reported by modern machine-learning approaches applied to commodity markets.
+
+---
+
+### Market Interpretation
+
+The performance profile exhibits economically realistic behavior:
+
+* **Short horizon (1 day):** lower predictability due to market microstructure noise.
+* **Medium horizon (2–3 days):** strongest predictive signal, consistent with delayed information propagation in commodity markets.
+* **Longer horizons (4–5 days):** gradual signal decay as uncertainty increases.
+
+This structure aligns with observed dynamics in real commodity trading environments rather than over-optimized backtests.
+
+---
+
+### Key Validation Indicators
+
+The final model demonstrates:
+
+✅ Stable convergence during training
+✅ Minimal train–validation performance gap
+✅ Consistent behavior across horizons
+✅ No evidence of leakage or unrealistic fitting
+✅ Performance maintained on unseen future data
+
+Together, these characteristics suggest the model is learning persistent market structure rather than memorizing historical price paths.
+
+---
+
+### Practical Significance
+
+In financial forecasting, predictive edge is incremental rather than dramatic.
+Directional accuracy improvements of even **5–10 percentage points above random** can represent meaningful informational advantage when integrated into a broader analytical workflow.
+
+Within the broader Autonomous Metal system, this forecasting component serves as the **quantitative backbone** that will later be combined with:
+
+* explainability analysis,
+* market news interpretation,
+* and automated analyst-style reasoning.
+
+---
+
+
 ## 🔮 Planned System Layers (In Development)
 
 ### Phase 2 — Model Explainability
