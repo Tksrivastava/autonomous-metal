@@ -272,9 +272,13 @@ This structure aligns with observed dynamics in real commodity trading environme
 The final model demonstrates:
 
 ✅ Stable convergence during training
+
 ✅ Minimal train–validation performance gap
+
 ✅ Consistent behavior across horizons
+
 ✅ No evidence of leakage or unrealistic fitting
+
 ✅ Performance maintained on unseen future data
 
 Together, these characteristics suggest the model is learning persistent market structure rather than memorizing historical price paths.
