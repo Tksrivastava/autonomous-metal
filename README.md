@@ -15,9 +15,9 @@ The repository currently represents the **foundational forecasting and data pipe
 
 ## 🎯 Project Vision
 
-The long‑term objective is to build an AI system that can autonomously produce a weekly analyst-style report, similar to institutional commodity research desks.
+The long-term objective is to build an AI system that can autonomously produce a weekly analyst-style report, similar to institutional commodity research desks.
 
-Every Friday (End‑of‑Day), the system will eventually:
+Every Friday (End-of-Day), the system will eventually:
 
 1. Forecast next week’s aluminum prices
 2. Explain the dominant market drivers behind forecasts
@@ -70,7 +70,9 @@ Each stage is intentionally separated to mirror production-grade ML workflows an
 
 Downloads the required dataset from Kaggle and prepares the local data directory.
 
->⚠️ Mandatory step: Run this before executing any scripts, setup commands, or Docker builds.
+> ⚠️ Mandatory step: Run this before executing any scripts, setup commands, or Docker builds.
+
+---
 
 ### 2️⃣ Label Preparation Pipeline
 
@@ -82,13 +84,9 @@ Defines the supervised learning problem by:
 * Constructing forward-looking labels
 * Preparing prediction horizons
 
-This stage formalizes how price forecasting is framed.
-
 ---
 
-##Downloads data from Kaggle website.
-
-> Mandetory to execute before running any other script/.sh/dockerfile# 3️⃣ Training Data Preparation
+### 3️⃣ Training Data Preparation
 
 **`pipelines/prepare-training-data-pipeline.py`**
 
@@ -113,8 +111,6 @@ Transforms raw inputs into predictive signals through:
 * Scaling and conditioning
 * Driver preprocessing
 
-This stage captures market structure used by the forecasting model.
-
 ---
 
 ### 5️⃣ Forecast Model Training Pipeline
@@ -136,19 +132,13 @@ Outputs serve as the quantitative backbone for future analyst reports.
 ```
 autonomous-metal/
 │
-├── core/                         # Shared utilities and data logic
-├── artifacts/                    # Generated outputs and intermediates
-│
-├── fetch-data-kaggle-pipeline.py
-├── label-preparation-pipeline.py
-├── prepare-training-data-pipeline.py
-├── feature-engineering-pipeline.py
-├── forecast-model-training-pipeline.py
-│
-├── .github/workflows/            # CI automation (linting, checks)
-├── .pre-commit-config.yaml       # Pre-commit quality checks
-├── pyproject.toml                # Project configuration
-└── requirement.txt               # Dependencies
+├── core/
+├── artifacts/
+├── .env.example
+├── pipelines/
+├── .github/workflows/
+├── pyproject.toml
+└── requirement.txt
 ```
 
 ---
@@ -168,52 +158,44 @@ autonomous-metal/
 
 ---
 
-## 📊 Forecast Model Performance (Current Benchmark)
+# 📊 Forecast Model Performance (Current Benchmark)
 
-The current forecasting system has reached a stable performance baseline after extensive architectural experimentation, hyperparameter tuning, and repeated out-of-sample evaluation.
+The forecasting system has reached a stable performance baseline after extensive architectural experimentation, hyperparameter tuning, and repeated out-of-sample evaluation.
 
-All reported metrics are computed on a **strict chronological validation period**, ensuring that model evaluation reflects realistic forward-looking market prediction rather than randomized cross-validation.
+Evaluation uses a **strict chronological split**, ensuring realistic forward-looking performance.
 
-The model performs **direct multi-horizon forecasting** of LME Aluminum price movements using a fixed historical lookback window accross 14 market drivers.
+The model performs **direct multi-horizon forecasting** using a fixed historical lookback window across 14 market drivers.
 
 ---
 
-### Evaluation Setup
+## Evaluation Setup
 
-* Training period: historical market data prior to validation window
-* Validation period: strictly future observations (chronological split)
 * Forecast horizons: **1–5 trading days ahead**
-* Targets: price forecasts derived from predicted returns
+* Targets derived from predicted returns
 * Metrics:
 
-  * **MAPE (Mean Absolute Percentage Error)** — price accuracy
-  * **Directional Accuracy** — correctness of predicted price movement sign
+  * **MAPE** — price accuracy
+  * **Directional Accuracy** — correctness of predicted movement sign
 
-Directional accuracy is emphasized because, in financial markets, correctly predicting the **direction of movement** is often more economically meaningful than minimizing absolute error.
-
----
-
-### Final Model Performance
-
-#### Price Forecast Accuracy (MAPE)
-
-| Days Ahead | Train MAPE | Validation MAPE |
-| ---------- | ---------- | --------------- |
-| 1          | 0.87%      | **0.96%**       |
-| 2          | 1.23%      | **1.23%**       |
-| 3          | 1.56%      | **1.46%**       |
-| 4          | 1.95%      | **2.24%**       |
-| 5          | 2.21%      | **2.22%**       |
-
-**Observations**
-
-* Error increases smoothly with forecast horizon, which is expected due to uncertainty accumulation.
-* Training and validation errors remain closely aligned, indicating strong generalization.
-* No instability or divergence is observed at longer horizons.
+Directional accuracy is emphasized because market usefulness depends primarily on predicting price direction rather than minimizing numerical deviation.
 
 ---
 
-#### Directional Accuracy (Primary Metric)
+## Final Model Performance
+
+### Price Forecast Accuracy (MAPE)
+
+| Days Ahead | Train | Validation |
+| ---------- | ----- | ---------- |
+| 1          | 0.87% | **0.96%**  |
+| 2          | 1.23% | **1.23%**  |
+| 3          | 1.56% | **1.46%**  |
+| 4          | 1.95% | **2.24%**  |
+| 5          | 2.21% | **2.22%**  |
+
+---
+
+### Directional Accuracy (Primary Metric)
 
 | Days Ahead | Train | Validation |
 | ---------- | ----- | ---------- |
@@ -225,124 +207,152 @@ Directional accuracy is emphasized because, in financial markets, correctly pred
 
 ---
 
-### Interpretation Relative to Market Standards
+## Interpretation Relative to Market Standards
 
-Financial time-series forecasting differs fundamentally from typical machine learning tasks due to:
+Financial markets exhibit low signal-to-noise ratios and near-random short-term behavior.
 
-* High market efficiency
-* Low signal-to-noise ratio
-* Regime shifts and macroeconomic shocks
-* Near-random short-term return behavior
+Typical benchmarks:
 
-As a result, even small improvements over random prediction are statistically meaningful.
+| Accuracy   | Interpretation             |
+| ---------- | -------------------------- |
+| ~50%       | Random walk                |
+| 52–55%     | Weak signal                |
+| 55–58%     | Strong ML performance      |
+| **58–61%** | Research-level forecasting |
 
-#### Typical Directional Accuracy Benchmarks (Finance Literature)
-
-| Accuracy Range | Interpretation                                    |
-| -------------- | ------------------------------------------------- |
-| ~50%           | Random walk baseline                              |
-| 52–55%         | Weak predictive signal                            |
-| 55–58%         | Strong ML forecasting performance                 |
-| **58–61%**     | High-quality research-level models                |
-| >62%           | Rare; often regime-specific or unrealistic setups |
-
-The Autonomous Metal forecasting model achieves:
-
-* **≈57–60% directional accuracy across horizons**
-* Peak performance of **60.5% at 3-day horizon**
-
-This places the system within the performance range commonly reported by modern machine-learning approaches applied to commodity markets.
+Autonomous Metal achieves **≈57–60% directional accuracy**, placing it within modern deep-learning commodity forecasting ranges.
 
 ---
 
-### Market Interpretation
+# 🧠 Model Architecture
 
-The performance profile exhibits economically realistic behavior:
+The forecasting model is a lightweight temporal convolutional network designed for noisy financial time-series environments.
 
-* **Short horizon (1 day):** lower predictability due to market microstructure noise.
-* **Medium horizon (2–3 days):** strongest predictive signal, consistent with delayed information propagation in commodity markets.
-* **Longer horizons (4–5 days):** gradual signal decay as uncertainty increases.
+```python
+Input (lookback × features)
+        ↓
+Conv1D (temporal feature extraction)
+        ↓
+Batch Normalization
+        ↓
+Flatten Projection
+        ↓
+Regularized Dense Forecast Head
+```
 
-This structure aligns with observed dynamics in real commodity trading environments rather than over-optimized backtests.
+### Architectural Rationale
 
----
+**Temporal Convolution**
 
-### Key Validation Indicators
+Captures short-term momentum and micro-trend patterns while remaining parameter-efficient.
 
-The final model demonstrates:
+**Batch Normalization**
 
-✅ Stable convergence during training
+Stabilizes training under non-stationary market distributions.
 
-✅ Minimal train–validation performance gap
+**Flatten Projection**
 
-✅ Consistent behavior across horizons
+Acts as a compact signal aggregation mechanism, avoiding high-capacity recurrent models that tend to overfit small financial datasets.
 
-✅ No evidence of leakage or unrealistic fitting
+**Regularized Forecast Head**
 
-✅ Performance maintained on unseen future data
+Combines:
 
-Together, these characteristics suggest the model is learning persistent market structure rather than memorizing historical price paths.
+* L2 weight regularization (controls magnitude)
+* L1 activity regularization (encourages sparse signal usage)
 
----
-
-### Practical Significance
-
-In financial forecasting, predictive edge is incremental rather than dramatic.
-Directional accuracy improvements of even **5–10 percentage points above random** can represent meaningful informational advantage when integrated into a broader analytical workflow.
-
-Within the broader Autonomous Metal system, this forecasting component serves as the **quantitative backbone** that will later be combined with:
-
-* explainability analysis,
-* market news interpretation,
-* and automated analyst-style reasoning.
+The `tanh` output bounds predictions and stabilizes return forecasting.
 
 ---
 
+# 🎯 Directional Penalty Loss
+
+Financial usefulness depends on predicting **direction**, not only magnitude.
+
+The model therefore uses a custom objective:
+
+```python
+def _directional_penatly_loss(y_true, y_pred, sample_weight=None):
+    mse = tf.keras.losses.mean_squared_error(y_true, y_pred)
+
+    directional_accuracy = tf.reduce_mean(
+        tf.cast(tf.equal(tf.sign(y_true), tf.sign(y_pred)), tf.float32)
+    )
+
+    directional_penalty = 2 / (1 + directional_accuracy)
+
+    return mse * directional_penalty
+```
+
+### Concept
+
+[
+Loss = MSE \times \frac{2}{1 + DirectionalAccuracy}
+]
+
+This dynamically adjusts optimization pressure:
+
+* Correct direction → smaller penalty
+* Incorrect direction → stronger correction
+* Magnitude learning preserved via MSE backbone
+
+The loss aligns gradient updates with economically meaningful prediction behavior.
+
+---
+
+# 📉 Training Dynamics
+
+Training convergence can be inspected via loss curves stored in:
+
+```
+/artifacts/loss-plot-{days_ahead}-days-ahead.png
+```
+
+Observed characteristics:
+
+* Rapid training convergence
+* Smooth validation improvement
+* No late-stage divergence
+* Consistent behavior across all horizons
+
+These patterns indicate learning of persistent market structure rather than memorization.
+
+---
+
+## Market Interpretation
+
+* **1-day horizon:** dominated by microstructure noise
+* **2–3 days:** strongest predictive signal
+* **4–5 days:** gradual information decay
+
+This structure closely matches empirical commodity market behavior.
+
+---
 
 ## 🔮 Planned System Layers (In Development)
 
 ### Phase 2 — Model Explainability
 
-* SHAP-based driver importance analysis
-* Identification of dominant market factors
-* Driver behavior tracking over prior weeks
+SHAP-based driver importance analysis.
 
 ### Phase 3 — Market Intelligence Layer
 
-* Automated ingestion of aluminum industry news
-* Weekly sentiment aggregation
-* Theme extraction from global developments
+Automated ingestion of aluminum industry news.
 
 ### Phase 4 — Autonomous Analyst Report
 
-* Weekly execution (Friday EoD)
-* Narrative market outlook generation
-* Risk and driver explanation
-* Fully automated analyst-style report
-
----
-
-## 🔁 Target Weekly Workflow (Future)
-
-```
-Weekly News + Forecasts + SHAP Drivers
-                ↓
-        Market Reasoning Layer
-                ↓
-     AI-Generated Analyst Report
-```
+Weekly AI-generated commodity outlook.
 
 ---
 
 ## 🛠️ Tech Stack
 
 * Python 3.11
+* TensorFlow / Keras
 * Pandas / NumPy
-* Scikit-learn ecosystem
-* SHAP (planned integration)
-* Linux development environment
+* Scikit-learn
+* SHAP (planned)
 * GitHub Actions
-* Pre-commit automation
 
 ---
 
@@ -354,15 +364,11 @@ Current focus:
 
 * Stabilizing forecasting pipelines
 * Feature engineering experimentation
-* Improving reproducibility and automation
-
-The repository reflects an evolving research system rather than a finished product.
+* Improving reproducibility
 
 ---
 
 ## 📌 Why This Project Exists
-
-Most ML finance projects end at prediction accuracy. Autonomous Metal explores a different question:
 
 > Can an AI system behave like a commodity research analyst rather than just a forecasting model?
 
@@ -370,7 +376,7 @@ Most ML finance projects end at prediction accuracy. Autonomous Metal explores a
 
 ## ⚠️ Disclaimer
 
-This project is for **research and educational purposes only** and does not constitute financial or trading advice.
+Research and educational purposes only. Not financial advice.
 
 ---
 
@@ -383,4 +389,4 @@ Applied Data Scientist & ML Systems Engineer
 
 ## ⭐ Long-Term Vision
 
-To evolve Autonomous Metal into a fully autonomous commodity intelligence system capable of combining quantitative modeling, explainability, and real‑world market reasoning into a single analyst workflow.
+To evolve Autonomous Metal into a fully autonomous commodity intelligence system combining quantitative modeling, explainability, and market reasoning into a unified analyst workflow.
