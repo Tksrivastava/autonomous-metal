@@ -113,11 +113,11 @@ class AutonomusForecastModelArchitecture:
     @register_keras_serializable(package="Autonomous")
     def _directional_penatly_loss(y_true, y_pred, sample_weight=None):
         mse = tf.keras.losses.mean_squared_error(y_true, y_pred)
-        da = tf.reduce_mean(
+        directional_accuracy = tf.reduce_mean(
             tf.cast(tf.equal(tf.sign(y_true), tf.sign(y_pred)), tf.float32)
         )
-        inv_da = tf.where(tf.equal(da, 0.0), 1e12, 1.0 / da)
-        return mse * inv_da
+        directional_penalty = 2 / (1 + directional_accuracy)
+        return mse * directional_penalty
 
     def _build_model(self) -> tf.keras.models.Model:
         inp = tf.keras.layers.Input(
@@ -129,22 +129,18 @@ class AutonomusForecastModelArchitecture:
         )
 
         x = tf.keras.layers.Conv1D(
-            filters=12, kernel_size=5, activation="gelu", use_bias=False
+            filters=12, kernel_size=5, activation="gelu", use_bias=True
         )(inp)
-        x = tf.keras.layers.LayerNormalization()(x)
-
-        x = tf.keras.layers.Concatenate()(
-            [
-                tf.keras.layers.GlobalAveragePooling1D()(x),
-                tf.keras.layers.GlobalMaxPooling1D()(x),
-            ]
-        )
         x = tf.keras.layers.BatchNormalization()(x)
+
+        x = tf.keras.layers.Flatten()(x)
 
         out = tf.keras.layers.Dense(
             self.output_horizon_space,
             activation="tanh",
-            use_bias=False,
+            use_bias=True,
+            kernel_regularizer=tf.keras.regularizers.L2(0.001),
+            activity_regularizer=tf.keras.regularizers.L1(0.0001),
             name="final_forecasting_space",
         )(x)
 

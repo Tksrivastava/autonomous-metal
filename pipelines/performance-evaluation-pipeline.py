@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # merge predictions into labels
     y = y.merge(pred_df, on=["ssd", "days_ahead"], how="left")
 
-    y = y.loc[~y.prediction.isna()].copy()
+    y = y.loc[(~y.prediction.isna()) & (~y.y.isna())].copy()
 
     logger.info(f"Predictions generated - {y.shape}")
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     y["da"] = np.where(np.sign(y["y"]) == np.sign(y["prediction"]), 1, 0)
 
     y["period"] = np.where(
-        y["ssd"] >= "2025-01-01",
+        y["ssd"] >= "2025-02-01",
         "validation",
         "train",
     )
@@ -117,7 +117,7 @@ if __name__ == "__main__":
             index="days_ahead",
             columns="period",
             values="ape",
-            aggfunc="mean",
+            aggfunc=["mean", "count"],
         ).reset_index()
     )
 
@@ -127,6 +127,6 @@ if __name__ == "__main__":
             index="days_ahead",
             columns="period",
             values="da",
-            aggfunc="mean",
+            aggfunc=["mean", "count"],
         ).reset_index()
     )

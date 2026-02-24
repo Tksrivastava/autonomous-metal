@@ -19,7 +19,7 @@ if __name__ == "__main__":
     y = pd.read_csv(LABEL_PATH)
     logger.info(f"Features and Label dataset fetched - {x.shape}, {y.shape}")
 
-    y = y.loc[y.ssd < "2025-01-01"].copy()
+    y = y.loc[y.ssd < "2025-02-01"].copy()
     logger.info(f"Training data duration - {y.ssd.min()} - {y.ssd.max()}")
 
     x_train, y_train = [], []
