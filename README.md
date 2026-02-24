@@ -127,6 +127,48 @@ Outputs serve as the quantitative backbone for future analyst reports.
 
 ---
 
+### 6️⃣ Performance Evaluation Pipeline
+
+**`pipelines/performance-evaluation-pipeline.py`**
+
+Evaluates trained forecasting models using a strict chronological split to measure real out-of-sample performance across all prediction horizons.
+
+This pipeline serves as the **final validation layer** of the forecasting system, converting model outputs into economically meaningful evaluation metrics.
+
+**Responsibilities**
+
+* Loads trained models for each forecast horizon
+* Reconstructs sliding-window inputs identical to training
+* Applies saved feature scaling for consistency
+* Generates batch predictions across all horizons
+* Aligns predictions with `(ssd, days_ahead)` timestamps
+* Converts predicted returns back into price space
+* Computes performance metrics:
+
+  * Mean Absolute Percentage Error (MAPE)
+  * Directional Accuracy (DA)
+
+**Evaluation Design**
+
+Performance is computed using a chronological regime split:
+
+* **Train period** — historical data used during model development
+* **Validation period** — strictly future observations
+
+This ensures evaluation reflects realistic forward forecasting rather than randomized validation.
+
+**Outputs**
+
+The pipeline logs aggregated performance summaries:
+
+* Horizon-wise MAPE statistics
+* Directional accuracy metrics
+* Sample counts per evaluation period
+
+These results form the quantitative benchmark reported in the project’s model performance section.
+
+---
+
 ## 📁 Repository Structure
 
 ```
@@ -285,10 +327,6 @@ def _directional_penatly_loss(y_true, y_pred, sample_weight=None):
 ```
 
 ### Concept
-
-[
-Loss = MSE \times \frac{2}{1 + DirectionalAccuracy}
-]
 
 This dynamically adjusts optimization pressure:
 
