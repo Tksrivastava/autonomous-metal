@@ -1,0 +1,86 @@
+{
+  "lme_al": {
+    "business_name": "London Metal Exchange Aluminum Spot Prices",
+    "asset_class": "Industrial Metal",
+    "macro_role": "Primary target commodity price benchmark",
+    "relationship_to_aluminum": "Direct price reference"
+  },
+  "bhp_group_stocks": {
+    "business_name": "BHP Group Plc",
+    "asset_class": "Mining Equity",
+    "macro_role": "Global mining production sentiment",
+    "relationship_to_aluminum": "Proxy for metals demand and mining sector strength"
+  },
+  "brent_crude": {
+    "business_name": "Brent Crude Oil Benchmark",
+    "asset_class": "Energy Commodity",
+    "macro_role": "Global energy cost and inflation driver",
+    "relationship_to_aluminum": "Higher energy costs increase aluminum smelting costs and influence pricing"
+  },
+  "china_a450": {
+    "business_name": "China A450 Equity Index",
+    "asset_class": "Equity Index",
+    "macro_role": "Chinese industrial and manufacturing demand indicator",
+    "relationship_to_aluminum": "China is the largest aluminum consumer; reflects demand expectations"
+  },
+  "cobe_volatility": {
+    "business_name": "CBOE Volatility Index (VIX)",
+    "asset_class": "Volatility Index",
+    "macro_role": "Global risk sentiment gauge",
+    "relationship_to_aluminum": "Higher volatility often pressures industrial commodities via risk-off behavior"
+  },
+  "dax_performance": {
+    "business_name": "DAX 40 Index",
+    "asset_class": "Equity Index",
+    "macro_role": "European industrial and export economy indicator",
+    "relationship_to_aluminum": "Represents manufacturing demand tied to metals consumption"
+  },
+  "ftse100": {
+    "business_name": "FTSE 100 Index",
+    "asset_class": "Equity Index",
+    "macro_role": "Global commodity-heavy equity benchmark",
+    "relationship_to_aluminum": "Contains major mining firms reflecting commodity cycle sentiment"
+  },
+  "hindalco_stocks": {
+    "business_name": "Hindalco Industries Limited",
+    "asset_class": "Aluminum Producer Equity",
+    "macro_role": "Downstream aluminum industry performance",
+    "relationship_to_aluminum": "Direct corporate exposure to aluminum price movements"
+  },
+  "hsi": {
+    "business_name": "Hang Seng Index",
+    "asset_class": "Equity Index",
+    "macro_role": "Asia-Pacific financial and trade sentiment",
+    "relationship_to_aluminum": "Reflects regional economic demand influencing industrial metals"
+  },
+  "rio_tinto_stocks": {
+    "business_name": "Rio Tinto Group",
+    "asset_class": "Mining Equity",
+    "macro_role": "Global resource production outlook",
+    "relationship_to_aluminum": "Major mining player influencing metals supply sentiment"
+  },
+  "snp500": {
+    "business_name": "S&P 500 Index",
+    "asset_class": "Equity Index",
+    "macro_role": "Global macro risk appetite benchmark",
+    "relationship_to_aluminum": "Risk-on environments typically support industrial commodities"
+  },
+  "spgsia": {
+    "business_name": "S&P GSCI Aluminum Index",
+    "asset_class": "Commodity Index",
+    "macro_role": "Institutional commodity exposure benchmark",
+    "relationship_to_aluminum": "Tracks investment flows into aluminum markets"
+  },
+  "lme_al_inventory": {
+    "business_name": "LME Aluminum Warehouse Inventories",
+    "asset_class": "Supply Indicator",
+    "macro_role": "Physical supply availability measure",
+    "relationship_to_aluminum": "Falling inventories indicate tightening supply and bullish pressure"
+  },
+  "baltic_dry_index": {
+    "business_name": "Baltic Dry Index",
+    "asset_class": "Shipping & Trade Index",
+    "macro_role": "Global raw material shipping demand",
+    "relationship_to_aluminum": "Higher shipping demand signals stronger industrial activity and metals demand"
+  }
+}
