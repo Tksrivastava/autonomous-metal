@@ -55,6 +55,36 @@ class StructuredAnalystState(BaseModel):
     insight: Optional[StructuredInsight] = None
 
 
+class Compress:
+    def __init__(self):
+        pass
+
+    def compress_numeric_payload(obj):
+        """
+        Convert all numeric values to float32 and round to 2 decimals.
+        Recursively supports dict, list, numpy arrays.
+        """
+
+        import numpy as np
+
+        if isinstance(obj, dict):
+            return {k: Compress.compress_numeric_payload(v) for k, v in obj.items()}
+
+        elif isinstance(obj, list):
+            return [Compress.compress_numeric_payload(v) for v in obj]
+
+        elif isinstance(obj, np.ndarray):
+            return np.round(obj.astype(np.float32), 2).tolist()
+
+        elif isinstance(obj, (np.floating, float)):
+            return float(np.round(np.float32(obj), 2))
+
+        elif isinstance(obj, (np.integer, int)):
+            return int(obj)
+
+        return obj
+
+
 class MarketAnalyst:
     def __init__(self):
         logger.info("Initializing MarketAnalyst")
@@ -140,8 +170,11 @@ class MarketAnalyst:
         state.feature_asset_class = meta["asset_class"]
         state.feature_relation_to_lme_al = meta["relationship_to_aluminum"]
 
-        state.feature_timeseries = df_last[["ssd", state.feature_name]].to_json(
-            orient="records"
+        ts_json = json.loads(
+            df_last[["ssd", state.feature_name]].to_json(orient="records")
+        )
+        state.feature_timeseries = json.dumps(
+            Compress.compress_numeric_payload(ts_json)
         )
 
         return state
@@ -166,12 +199,18 @@ class MarketAnalyst:
             price = round(float(pred * state.ssd_lme_price + state.ssd_lme_price), 2)
             forecasts.append(price)
 
-        state.lme_al_forecast = pd.DataFrame(
+        forecast_df = pd.DataFrame(
             {
                 "future_dates": self.next_dates,
                 "forecasted_lme_al_price": forecasts,
             }
-        ).to_json(orient="records")
+        )
+
+        state.lme_al_forecast = json.dumps(
+            Compress.compress_numeric_payload(
+                json.loads(forecast_df.to_json(orient="records"))
+            )
+        )
 
         logger.info("Forecast generation completed")
 
@@ -197,7 +236,9 @@ class MarketAnalyst:
         for date, model in zip(self.next_dates, self.model_artifacts):
             explainer = shap.GradientExplainer(model.model, bg_data)
             shap_val = explainer.shap_values(self.x_np)[0][0][:, f_index]
-            shap_scores[f"SHAP score for {date}"] = shap_val.tolist()
+            shap_scores[f"SHAP score for {date}"] = Compress.compress_numeric_payload(
+                shap_val
+            )
 
         state.shap_score = shap_scores
 
@@ -208,7 +249,7 @@ class MarketAnalyst:
     def _get_structural_insights(self, state: StructuredAnalystState):
         logger.info("Generating structured analyst insights")
 
-        state.insight = self.structured_llm.invoke(
+        response = self.structured_llm.invoke(
             [
                 ("system", StrucutredSystemPrompt.prompt),
                 (
@@ -221,13 +262,15 @@ class MarketAnalyst:
                         feature_macro_role=state.feature_macro_role,
                         feature_relation_to_lme_al=state.feature_relation_to_lme_al,
                         feature_timeseries=state.feature_timeseries,
-                        shap_score=state.shap_score,
+                        shap_score=Compress.compress_numeric_payload(state.shap_score),
                         ssd_lme_price=state.ssd_lme_price,
                     ).get_prompt(),
                 ),
             ]
         )
-
+        logger.info(response)
+        logger.info(type(response))
+        state.insight = response
         logger.info("Insight generation completed")
 
         return state
