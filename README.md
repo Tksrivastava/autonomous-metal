@@ -172,15 +172,43 @@ These results form the quantitative benchmark reported in the project’s model 
 ## 📁 Repository Structure
 
 ```
-autonomous-metal/
-│
-├── core/
-├── artifacts/
-├── .env.example
-├── pipelines/
-├── .github/workflows/
-├── pyproject.toml
-└── requirement.txt
+├── 📁 .github
+│   └── 📁 workflows
+│       ├── ⚙️ pre-commit.yml
+│       └── ⚙️ pylint.yml
+├── 📁 artifacts
+│   ├── 📄 feature-scaler.pkl
+│   ├── 📄 lme-al-forecast-model-1-days-ahead.keras
+│   ├── 📄 lme-al-forecast-model-2-days-ahead.keras
+│   ├── 📄 lme-al-forecast-model-3-days-ahead.keras
+│   ├── 📄 lme-al-forecast-model-4-days-ahead.keras
+│   ├── 📄 lme-al-forecast-model-5-days-ahead.keras
+│   ├── 🖼️ loss-plot-1-days-ahead.png
+│   ├── 🖼️ loss-plot-2-days-ahead.png
+│   ├── 🖼️ loss-plot-3-days-ahead.png
+│   ├── 🖼️ loss-plot-4-days-ahead.png
+│   └── 🖼️ loss-plot-5-days-ahead.png
+├── 📁 core
+│   ├── 🐍 __init__.py
+│   ├── 🐍 logging.py
+│   ├── 🐍 model.py
+│   ├── 🐍 retriever.py
+│   └── 🐍 utils.py
+├── 📁 logs
+├── 📁 pipelines
+│   ├── 🐍 feature-engineering-pipeline.py
+│   ├── 🐍 fetch-data-kaggle-pipeline.py
+│   ├── 🐍 forecast-model-training-pipeline.py
+│   ├── 🐍 label-preparation-pipeline.py
+│   ├── 🐍 performance-evaluation-pipeline.py
+│   └── 🐍 prepare-training-data-pipeline.py
+├── ⚙️ .env.example
+├── ⚙️ .gitignore
+├── ⚙️ .pre-commit-config.yaml
+├── 📄 LICENSE
+├── 📝 README.md
+├── ⚙️ pyproject.toml
+└── 📄 requirement.txt
 ```
 
 ---
