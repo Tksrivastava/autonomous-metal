@@ -1,19 +1,24 @@
+import os
 import sqlite3
 from pathlib import Path
 from typing import Final
-
-
-from core.logging import LoggerFactory
+from dotenv import load_dotenv
 from core.utils import PrepareLabels
+from core.logging import LoggerFactory
 
 
 logger = LoggerFactory().get_logger(__name__)
+
+FILE_PATH: Final[Path] = Path(__file__).resolve().parent.parent
+ENV_PATH: Final[Path] = f"{FILE_PATH}/.env"
+load_dotenv(dotenv_path=ENV_PATH)
+logger.info("Environment variables loaded from .env")
 
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 DATASET_PATH: Final[Path] = BASE_DIR / "dataset" / "autonomous-metal-db.db"
 LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
-HORIZON_DAYS: Final[int] = 5
+HORIZON_DAYS: Final[int] = int(os.getenv("FORECAST_HORIZON"))
 
 
 if __name__ == "__main__":

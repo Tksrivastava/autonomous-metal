@@ -1,40 +1,45 @@
+import os
 import pickle
+import numpy as np
 from pathlib import Path
 from typing import Final
-
-import numpy as np
-from sklearn.preprocessing import RobustScaler
-
+from dotenv import load_dotenv
 from core.utils import PlotHistory
 from core.logging import LoggerFactory
+from sklearn.preprocessing import RobustScaler
 from core.model import AutonomusForecastModelArchitecture
 
 
 logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
 
+FILE_PATH: Final[Path] = Path(__file__).resolve().parent.parent
+ENV_PATH: Final[Path] = f"{FILE_PATH}/.env"
+load_dotenv(dotenv_path=ENV_PATH)
+logger.info("Environment variables loaded from .env")
+
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
-TRAINING_X_PATH: Final[Path] = BASE_DIR / "dataset" / "training-x.npy"
-TRAINING_Y_PATH: Final[Path] = BASE_DIR / "dataset" / "training-y.npy"
-ARTIFACT_PATH: Final[Path] = BASE_DIR / "artifacts"
-
-SCALER_PATH: Final[Path] = ARTIFACT_PATH / "feature-scaler.pkl"
-MODEL_PATH: Final[Path] = ARTIFACT_PATH / "lme-al-forecast-model-%s-days-ahead.keras"
-PLOT_PATH: Final[Path] = ARTIFACT_PATH / "loss-plot-%s-days-ahead.png"
+TRAINING_X_PATH: Final[Path] = BASE_DIR / "artifacts" / "training-x.pkl"
+TRAINING_Y_PATH: Final[Path] = BASE_DIR / "artifacts" / "training-y.pkl"
+SCALER_PATH: Final[Path] = BASE_DIR / "artifacts" / "feature-scaler.pkl"
+MODEL_PATH: Final[Path] = (
+    BASE_DIR / "artifacts" / "lme-al-forecast-model-%s-days-ahead.keras"
+)
+PLOT_PATH: Final[Path] = BASE_DIR / "artifacts" / "loss-plot-%s-days-ahead.png"
+HORIZON_DAYS: Final[int] = int(os.getenv("FORECAST_HORIZON"))
 
 
 if __name__ == "__main__":
     logger.info("Starting autoencoder training pipeline")
 
-    ARTIFACT_PATH.mkdir(parents=True, exist_ok=True)
-    logger.info("Artifact directory ready: %s", ARTIFACT_PATH)
-
     logger.info("Loading x data from %s", TRAINING_X_PATH)
-    x = np.load(TRAINING_X_PATH)
+    x = pickle.load(open(TRAINING_X_PATH, "rb"))
+    x = np.stack(list(x.values())).astype(np.float32)
 
     logger.info("Loading y data from %s", TRAINING_Y_PATH)
-    y = np.load(TRAINING_Y_PATH)
+    y = pickle.load(open(TRAINING_Y_PATH, "rb"))
+    y = np.stack(list(y.values())).astype(np.float32)
 
     logger.info("Applying RobustScaler on X data")
     scaler = RobustScaler()
@@ -50,7 +55,7 @@ if __name__ == "__main__":
     logger.info("Feature scaler saved to %s", SCALER_PATH)
 
     logger.info("Training individual model for each future horizon")
-    for days_ahead in range(5):
+    for days_ahead in range(HORIZON_DAYS):
         horizon_y = y[:, days_ahead].reshape(-1, 1)
         logger.info(
             f"Filtered label data for {days_ahead+1} days ahead horizon - {horizon_y.shape}"

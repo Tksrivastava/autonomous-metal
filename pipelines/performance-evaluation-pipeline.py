@@ -1,13 +1,20 @@
+import os
 import pickle
 import numpy as np
 import pandas as pd
 from pathlib import Path
 from typing import Final
+from dotenv import load_dotenv
 from core.logging import LoggerFactory
 from tensorflow.keras.backend import clear_session
 from core.model import AutonomusForecastModelArchitecture
 
 logger = LoggerFactory().get_logger(__name__)
+
+FILE_PATH: Final[Path] = Path(__file__).resolve().parent.parent
+ENV_PATH: Final[Path] = f"{FILE_PATH}/.env"
+load_dotenv(dotenv_path=ENV_PATH)
+logger.info("Environment variables loaded from .env")
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
@@ -16,8 +23,8 @@ SCALER_MODEL_PATH: Final[Path] = BASE_DIR / "artifacts" / "feature-scaler.pkl"
 MODEL_PATH: Final[Path] = (
     BASE_DIR / "artifacts" / "lme-al-forecast-model-%s-days-ahead.keras"
 )
-
-WINDOW = 10
+HORIZON_DAYS: Final[int] = int(os.getenv("FORECAST_HORIZON"))
+LAG_WINDOW: int = int(os.getenv("LAG_WINDOW"))
 
 
 if __name__ == "__main__":
@@ -44,8 +51,8 @@ if __name__ == "__main__":
     windows = []
     window_ssd = []
 
-    for i in range(WINDOW - 1, len(X_values)):
-        windows.append(X_values[i - WINDOW + 1 : i + 1])
+    for i in range(LAG_WINDOW - 1, len(X_values)):
+        windows.append(X_values[i - LAG_WINDOW + 1 : i + 1])
         window_ssd.append(ssd_values[i])
 
     windows = np.array(windows)  # (N, WINDOW, n_features)
@@ -60,7 +67,7 @@ if __name__ == "__main__":
 
     logger.info("Running batch prediction for each horizon")
     preds = []
-    for days_ahead in range(5):
+    for days_ahead in range(HORIZON_DAYS):
         logger.info(f"Loading model from - {str(MODEL_PATH)%str(days_ahead+1)}")
         model = AutonomusForecastModelArchitecture.load(
             str(MODEL_PATH) % str(days_ahead + 1)

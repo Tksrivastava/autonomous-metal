@@ -1,8 +1,6 @@
 import sqlite3
 from pathlib import Path
 from typing import Final
-
-
 from core.logging import LoggerFactory
 from core.utils import FetchRawFeatures
 

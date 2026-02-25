@@ -249,25 +249,22 @@ class MarketAnalyst:
     def _get_structural_insights(self, state: StructuredAnalystState):
         logger.info("Generating structured analyst insights")
 
-        response = self.structured_llm.invoke(
-            [
-                ("system", StrucutredSystemPrompt.prompt),
-                (
-                    "human",
-                    StructuredUserPrompt(
-                        ssd_date=state.ssd_date,
-                        lme_al_forecast=state.lme_al_forecast,
-                        feature_business_name=state.feature_business_name,
-                        feature_asset_class=state.feature_asset_class,
-                        feature_macro_role=state.feature_macro_role,
-                        feature_relation_to_lme_al=state.feature_relation_to_lme_al,
-                        feature_timeseries=state.feature_timeseries,
-                        shap_score=Compress.compress_numeric_payload(state.shap_score),
-                        ssd_lme_price=state.ssd_lme_price,
-                    ).get_prompt(),
-                ),
-            ]
+        prompt = (
+            StrucutredSystemPrompt.prompt
+            + StructuredUserPrompt(
+                ssd_date=state.ssd_date,
+                lme_al_forecast=state.lme_al_forecast,
+                feature_business_name=state.feature_business_name,
+                feature_asset_class=state.feature_asset_class,
+                feature_macro_role=state.feature_macro_role,
+                feature_relation_to_lme_al=state.feature_relation_to_lme_al,
+                feature_timeseries=state.feature_timeseries,
+                shap_score=Compress.compress_numeric_payload(state.shap_score),
+                ssd_lme_price=state.ssd_lme_price,
+            ).get_prompt()
         )
+
+        response = self.structured_llm.invoke(prompt)
         logger.info(response)
         logger.info(type(response))
         state.insight = response
