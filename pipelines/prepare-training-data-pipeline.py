@@ -19,6 +19,8 @@ FEATURE_PATH: Final[Path] = BASE_DIR / "dataset" / "features.csv"
 ARTIFACT_PATH: Final[Path] = BASE_DIR / "artifacts"
 TRAINING_X_PATH: Final[Path] = BASE_DIR / "artifacts" / "training-x.pkl"
 TRAINING_Y_PATH: Final[Path] = BASE_DIR / "artifacts" / "training-y.pkl"
+FEATURES_SET_PATH: Final[Path] = BASE_DIR / "artifacts" / "features-set.pkl"
+SPOT_PRICES_PATH: Final[Path] = BASE_DIR / "artifacts" / "spot-prices.csv"
 LAG_WINDOW: int = int(os.getenv("LAG_WINDOW"))
 
 if __name__ == "__main__":
@@ -26,6 +28,14 @@ if __name__ == "__main__":
     x = x.sort_values("ssd").reset_index(drop=True)
     y = pd.read_csv(LABEL_PATH)
     logger.info(f"Features and Label dataset fetched - {x.shape}, {y.shape}")
+
+    features_set = x.drop(columns=["ssd"]).columns.tolist()
+    pickle.dump(features_set, open(FEATURES_SET_PATH, "wb"))
+    logger.info(f"Features order saved - {len(features_set)}")
+
+    actual = y[["ssd", "current_spot_price"]].copy()
+    actual.to_csv(SPOT_PRICES_PATH, index=False)
+    logger.info(f"Spot prices saved - {actual.shape}")
 
     y = (
         y.loc[y.ssd < "2025-02-01"]
@@ -37,7 +47,7 @@ if __name__ == "__main__":
     x_train, y_train = {}, {}
     for ssd in y.ssd.unique():
         temp_x = (
-            x.loc[x.ssd <= ssd]
+            x.loc[x.ssd <= ssd][features_set]
             .reset_index(drop=True)
             .iloc[-LAG_WINDOW:]
             .drop(columns=["ssd"])
