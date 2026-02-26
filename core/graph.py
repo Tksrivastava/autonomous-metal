@@ -53,6 +53,7 @@ class StructuredMarketAnalyst:
         x_data_path: str = None,
         raw_features_path: str = None,
         feature_name: str = None,
+        horizon: int = 5
     ):
         # Store parameters
         self.gorq_model = gorq_model
@@ -79,6 +80,7 @@ class StructuredMarketAnalyst:
         self.workflow = StateGraph(StructuredAnalystState)
 
         # Initialize required components
+        self.horizon = horizon
         self._init_llm()
         self._init_scaler()
         self._init_forecast_models()
@@ -156,7 +158,7 @@ class StructuredMarketAnalyst:
         self.next_dates = (
             pd.date_range(
                 start=pd.to_datetime(self.ssd_date) + pd.offsets.BDay(1),
-                periods=5,
+                periods=self.horizon,
                 freq="B",
             )
             .strftime("%Y-%m-%d")
