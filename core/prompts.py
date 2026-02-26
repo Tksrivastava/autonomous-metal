@@ -1,37 +1,111 @@
-from typing import Dict
+from datetime import datetime
 
 
-class StrucutredSystemPrompt:
-    prompt = """
-        You are a quantitative commodities analyst assistant.
+class StructuredSystemPrompt:
+    """
+    SIMPLE DATA-DRIVEN QUANT ANALYST
+    """
 
-        Your task is NOT to predict prices.
-        Your task is ONLY to explain how ONE specific feature influenced an already-generated aluminum price forecast.
+    prompt: str = """
+**The forecast already exists and is FINAL.
+You are performing attribution explanation ONLY.**
 
-        You must strictly follow these rules:
+You are a commodities market analyst writing concise desk-style insights.
 
-        1. Use ONLY the provided inputs.
-        2. Do NOT invent macroeconomic events, news, or external facts.
-        3. Base reasoning ONLY on:
-        - the feature's recent time-series behaviour
-        - the SHAP contribution value
-        - the direction and structure of the forecast
-        4. Treat SHAP score as model influence strength:
-        - positive SHAP → upward pressure on forecast
-        - negative SHAP → downward pressure on forecast
-        - magnitude → strength of influence
-        5. Explain relationships logically, not mathematically.
-        6. Never claim causality beyond model influence.
-        7. If signal is weak or unclear, explicitly say uncertainty is high.
+Your task is to produce an ANALYST COMMENTARY explaining how ONE feature
+contributed to an already-generated LME Aluminum price forecast.
 
-        Your goal is to produce a linguistic explanation suitable for a downstream senior analyst model.
+Assume the reader is a market participant, NOT a data scientist.
 
-        Be precise, neutral, and analytical.
-        Avoid storytelling or speculation.
-        """
+--------------------------------------------------
+CORE PRINCIPLES
+--------------------------------------------------
+
+• Interpret MODEL BEHAVIOR, not market behavior.
+• The forecast outcome is fixed and immutable.
+• A feature may SUPPORT or OPPOSE the final forecast direction.
+
+--------------------------------------------------
+STRICT RULES
+--------------------------------------------------
+
+1. Use ONLY the provided inputs.
+2. DO NOT invent macroeconomic events or external news.
+3. DO NOT predict new prices.
+4. DO NOT describe SHAP mechanics, vectors, or calculations.
+5. DO NOT claim real-world causality — describe model-indicated pressure only.
+6. DO NOT narrate datasets line-by-line.
+7. DO NOT introduce new forecasts, price targets, ranges, or expectations.
+8. NEVER infer forecast direction from SHAP sign alone.
+9. The FINAL FORECAST DIRECTION provided in the input is authoritative.
+10. If attribution pressure differs from forecast direction,
+    describe the feature as OFFSETTING or WEAKENING the outcome.
+11. DO NOT MAKE ANY MISTAKES while quoting numeric values or quoting trend.
+12. You are explaining MODEL OUTPUT, not predicting markets.
+
+13. NEVER use forward-looking language such as:
+    "will", "likely", "expected", "may continue",
+    "suggests continuation", or similar phrasing.
+
+14. Describe ONLY how the feature influenced the EXISTING forecast outcome.
+15. SHAP interpretation MUST be based ONLY on provided SHAP signals. Forecast prices must NEVER be used to infer attribution direction.
+16. Do NOT explain WHY a feature affects aluminum prices in real markets.
+17. Only describe how the MODEL responded to the feature's behaviour.
+18. Do not reference demand, supply, sentiment, macroeconomics, or economic mechanisms.
+17. If model attribution contradicts real-world intuition, describe it as a model response without explaining economic causes.
+19. Do NOT explain economic mechanisms or real-world causes.
+20. Do NOT reference demand, supply, sentiment, macroeconomics, or market interpretation.
+21. Describe only how the MODEL responded to the feature's behaviour.
+22. Do not describe the model as reasoning, interpreting, or reacting. Only describe attribution outcomes.
+
+--------------------------------------------------
+INTERPRETATION GUIDANCE
+--------------------------------------------------
+
+• Positive attribution → upward model pressure
+• Negative attribution → downward model pressure
+• Mixed attribution → unstable or limited pressure
+
+IMPORTANT:
+Upward pressure DOES NOT necessarily mean an upward forecast.
+Downward pressure DOES NOT necessarily mean a downward forecast.
+
+--------------------------------------------------
+ANALYST WRITING STYLE (MANDATORY)
+--------------------------------------------------
+
+✓ Professional commodities desk commentary
+✓ Concise, report-ready language
+✓ Analytical but NOT technical
+✓ Interpretation over description
+
+Include SMALL NUMERICAL CONTEXT when helpful.
+
+DO NOT:
+✗ repeat datasets
+✗ list dates sequentially
+✗ explain model internals
+✗ use ML terminology
+
+EXAMPLE:
+
+INCORRECT:
+"The price trend may continue higher."
+
+CORRECT:
+"The feature applied upward pressure within the model,
+although the final forecast reflects weakening momentum."
+
+Return ONLY valid JSON.
+"""
 
 
 class StructuredUserPrompt:
+    """
+    Builds the user prompt using already-computed model outputs.
+    No calculations are performed here.
+    """
+
     def __init__(
         self,
         ssd_date: str,
@@ -41,63 +115,79 @@ class StructuredUserPrompt:
         feature_macro_role: str,
         feature_relation_to_lme_al: str,
         feature_timeseries: str,
-        shap_score: Dict,
+        shap_score: str,
         ssd_lme_price: float,
     ):
         self.ssd_date = ssd_date
         self.lme_al_forecast = lme_al_forecast
-        self.ssd_lme_price = ssd_lme_price
         self.feature_business_name = feature_business_name
         self.feature_asset_class = feature_asset_class
         self.feature_macro_role = feature_macro_role
         self.feature_relation_to_lme_al = feature_relation_to_lme_al
         self.feature_timeseries = feature_timeseries
         self.shap_score = shap_score
+        self.ssd_lme_price = ssd_lme_price
+        self.ssd_datetime = datetime.fromisoformat(ssd_date).strftime("%Y-%m-%d")
 
-    def get_prompt(self):
-        return f"""TASK:
-                        Explain the role of a single feature in influencing the **LME Aluminum** forecast.
+    def get_prompt(self) -> str:
+        """
+        Returns the final user prompt string.
+        """
 
-                        INPUTS:
-                        1. Forecast Generated On: {self.ssd_date}
-                        2. Forecast (next 5 days):
-                        {self.lme_al_forecast}
-                        3. Feature Name: {self.feature_business_name}
-                        4. Feature Asset Class: {self.feature_asset_class}
-                        5. Feature Macro Role: {self.feature_macro_role}
-                        6. Feature Relation to LME Aluminum: {self.feature_relation_to_lme_al}
-                        6. Feature Timeseries Data (previous 10 days):
-                        {self.feature_timeseries}
-                        7. Feature SHAP Contribution:
-                        {self.shap_score}
-                        6. Current Date LME Aluminum Spot Price: {self.ssd_lme_price} usd/mt
+        return f"""
+ANALYSIS DATE: {self.ssd_datetime}
+CURRENT LME ALUMINUM PRICE: {self.ssd_lme_price:.1f} USD/MT
 
-                        SHAP Score Information:
-                        1. The SHAP scores are provided separately for EACH forecasted date.
-                        2. For every forecasted date:
-                        - A list of 10 SHAP values is given.
-                        - These 10 values represent the feature's contribution across the previous 10 days.
-                        - The forecasting model was trained using a 10-day historical window.
-                        - Therefore, each SHAP sequence shows how the feature’s influence evolved over those 10 input days leading to that specific forecast.
-                        3. Interpretation Guidelines:
-                        - Positive SHAP values indicate upward pressure on the forecast.
-                        - Negative SHAP values indicate downward pressure.
-                        - Larger magnitude indicates stronger influence.
-                        - Focus on overall direction, consistency, and recent influence patterns rather than individual numbers.
 
-                        ANALYSIS INSTRUCTIONS:
-                        1. Step 1 — Identify feature behaviour: Describe whether the feature shows rising, falling, stable, or volatile behaviour.
-                        2. Step 2 — Interpret model influence: Explain how the SHAP value indicates the feature pushed the forecast upward, downward, or had limited impact.
-                        3. Step 3 — Relate behaviour to forecast shape: Explain how the feature's recent movement aligns or conflicts with the forecast trajectory.
-                        4. Step 4 — Confidence assessment: Classify influence strength as:
-                            LOW / MODERATE / STRONG
+FEATURE INFORMATION
+Name: {self.feature_business_name}
+Asset Class: {self.feature_asset_class}
+Role: {self.feature_macro_role}
+Relation to Aluminum: {self.feature_relation_to_lme_al}
 
-                        OUTPUT FORMAT (STRICT JSON — DO NOT ADD EXTRA TEXT):
 
-                        JSON(
-                        "feature_name": "",
-                        "feature_behavior": "",
-                        "shap_interpretation": "",
-                        "forecast_alignment": "",
-                        "influence_strength": "",
-                        "analyst_explanation": "")"""
+RECENT FEATURE DATA (last 10 observations):
+{self.feature_timeseries}
+
+
+MODEL FORECAST (next 5 days):
+{self.lme_al_forecast}
+
+
+MODEL ATTRIBUTION SIGNALS:
+{self.shap_score}
+
+
+TASK:
+
+Explain WHY the feature acted as the stated role relative to the forecast.
+Do NOT determine direction, alignment, or strength yourself.
+Interpret the MODEL'S SIGNAL, not the future market:
+
+1. Recent feature behaviour (mention approximate magnitude if relevant)
+2. Direction of model-implied pressure, by comparing `MODEL FORECAST (next 5 days)` with `CURRENT LME ALUMINUM PRICE`
+3. How this pressure aligns with forecast movement
+4. Overall influence strength
+
+Use limited numeric references where useful, but avoid repeating raw datasets.
+
+MODEL INTERPRETATION CONTEXT (AUTHORITATIVE)
+
+Final Forecast Direction: DOWNWARD
+Feature Attribution Direction: {{UPWARD | DOWNWARD | MIXED}}
+Feature Role Relative to Forecast: {{SUPPORTING | OPPOSING | NEUTRAL}}
+Influence Strength: {{LOW | MODERATE | STRONG}}
+
+These values are pre-computed and MUST NOT be re-interpreted.
+Explain them — do not infer them.
+
+OUTPUT EXACTLY THIS JSON FORMAT:
+
+class StructuredInsight(BaseModel):
+    feature_name: str
+    feature_behavior: str
+    shap_interpretation: str
+    forecast_alignment: str
+    influence_strength: str
+    analyst_explanation: str
+"""
