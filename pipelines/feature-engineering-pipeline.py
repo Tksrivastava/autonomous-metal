@@ -4,7 +4,6 @@ from typing import Final
 from core.logging import LoggerFactory
 from core.utils import FetchRawFeatures
 
-
 logger = LoggerFactory().get_logger(__name__)
 
 

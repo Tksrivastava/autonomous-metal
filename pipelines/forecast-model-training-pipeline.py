@@ -9,7 +9,6 @@ from core.logging import LoggerFactory
 from sklearn.preprocessing import RobustScaler
 from core.model import AutonomusForecastModelArchitecture
 
-
 logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
 

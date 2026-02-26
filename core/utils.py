@@ -7,7 +7,6 @@ from pathlib import Path
 import plotly.graph_objects as go
 from core.logging import LoggerFactory
 
-
 logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
 

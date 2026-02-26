@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from core.utils import PrepareLabels
 from core.logging import LoggerFactory
 
-
 logger = LoggerFactory().get_logger(__name__)
 
 FILE_PATH: Final[Path] = Path(__file__).resolve().parent.parent
