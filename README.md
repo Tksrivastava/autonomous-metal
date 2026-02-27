@@ -49,6 +49,12 @@ Autonomous Metal is built to bridge this gap by evolving from a predictive machi
 
 ---
 
+## Sample Report
+
+Please refer to `/sample-report.md`for a generated analyst report produced using the current system development state.
+
+---
+
 ## Repository Design & Goals
 
 ```
