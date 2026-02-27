@@ -50,12 +50,12 @@ STRICT RULES
 14. Describe ONLY how the feature influenced the EXISTING forecast outcome.
 15. SHAP interpretation MUST be based ONLY on provided SHAP signals. Forecast prices must NEVER be used to infer attribution direction.
 16. Do NOT explain WHY a feature affects aluminum prices in real markets.
-17. Only describe how the MODEL responded to the feature's behaviour.
+17. Only describe how the MODEL responded to the feature's behavior.
 18. Do not reference demand, supply, sentiment, macroeconomics, or economic mechanisms.
 17. If model attribution contradicts real-world intuition, describe it as a model response without explaining economic causes.
 19. Do NOT explain economic mechanisms or real-world causes.
 20. Do NOT reference demand, supply, sentiment, macroeconomics, or market interpretation.
-21. Describe only how the MODEL responded to the feature's behaviour.
+21. Describe only how the MODEL responded to the feature's behavior.
 22. Do not describe the model as reasoning, interpreting, or reacting. Only describe attribution outcomes.
 
 --------------------------------------------------
@@ -164,7 +164,7 @@ Explain WHY the feature acted as the stated role relative to the forecast.
 Do NOT determine direction, alignment, or strength yourself.
 Interpret the MODEL'S SIGNAL, not the future market:
 
-1. Recent feature behaviour (mention approximate magnitude if relevant)
+1. Recent feature behavior (mention approximate magnitude if relevant)
 2. Direction of model-implied pressure, by comparing `MODEL FORECAST (next 5 days)` with `CURRENT LME ALUMINUM PRICE`
 3. How this pressure aligns with forecast movement
 4. Overall influence strength

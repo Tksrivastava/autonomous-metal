@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from core.utils import PlotHistory
 from core.logging import LoggerFactory
 from sklearn.preprocessing import RobustScaler
-from core.model import AutonomusForecastModelArchitecture
+from core.model import AutonomousForecastModelArchitecture
 
 logger_factory = LoggerFactory()
 logger = logger_factory.get_logger(__name__)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         logger.info(
             f"Initializing model | input_space={x.shape[1]} | output_space={horizon_y.shape[1]}"
         )
-        model = AutonomusForecastModelArchitecture(
+        model = AutonomousForecastModelArchitecture(
             seed=42,
             input_horizon_space=n_steps,
             input_feature_space=n_features,

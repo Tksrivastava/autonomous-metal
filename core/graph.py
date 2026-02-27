@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from core.logging import LoggerFactory
 from langgraph.graph import StateGraph, END
-from core.model import AutonomusForecastModelArchitecture
+from core.model import AutonomousForecastModelArchitecture
 from langchain_core.output_parsers import PydanticOutputParser
 from core.prompts import StructuredSystemPrompt, StructuredUserPrompt
 
@@ -43,8 +43,8 @@ class StructuredAnalystState(BaseModel):
 class StructuredMarketAnalyst:
     def __init__(
         self,
-        gorq_model: str = None,
-        gorq_api: str = None,
+        groq_model: str = None,
+        groq_api: str = None,
         scaler_artifact_path: str = None,
         forecast_models_artifact_directory_path: str = None,
         feature_order_path: str = None,
@@ -57,8 +57,8 @@ class StructuredMarketAnalyst:
         horizon: int = 5
     ):
         # Store parameters
-        self.gorq_model = gorq_model
-        self.gorq_api = gorq_api
+        self.groq_model = groq_model
+        self.groq_api = groq_api
         self.scaler_artifact_path = scaler_artifact_path
         self.forecast_models_artifact_directory_path = (
             forecast_models_artifact_directory_path
@@ -75,7 +75,7 @@ class StructuredMarketAnalyst:
         self.raw_features_path = raw_features_path
         self.feature_name = (
             feature_name
-            if ssd_date is not None
+            if feature_name is not None
             else self._raise(comment="Please provide feature_name")
         )
         self.workflow = StateGraph(StructuredAnalystState)
@@ -100,10 +100,10 @@ class StructuredMarketAnalyst:
         raise ValueError(comment)
 
     def _init_llm(self):
-        if self.gorq_model is None or self.gorq_api is None:
-            raise ValueError("Please provide gorq_model and gorq_api")
-        self.llm = ChatGroq(model=self.gorq_model, api_key=self.gorq_api, temperature=0)
-        logger.info(f"{self.gorq_model} loaded")
+        if self.groq_model is None or self.groq_api is None:
+            raise ValueError("Please provide groq_model and groq_api")
+        self.llm = ChatGroq(model=self.groq_model, api_key=self.groq_api, temperature=0)
+        logger.info(f"{self.groq_model} loaded")
 
     def _init_scaler(self):
         if self.scaler_artifact_path is None:
@@ -180,7 +180,7 @@ class StructuredMarketAnalyst:
         self.workflow.add_node(
             "get_feature_information", self._workflow_get_feature_information
         )
-        self.workflow.add_node("get_forecastings", self._workflow_get_forecastings)
+        self.workflow.add_node("get_forecasting", self._workflow_get_forecasting)
         self.workflow.add_node(
             "get_feature_timeseries", self._workflow_get_feature_timeseries
         )
@@ -192,8 +192,8 @@ class StructuredMarketAnalyst:
         logger.info("Entry point added")
 
         self.workflow.add_edge("get_feature_information", "get_feature_timeseries")
-        self.workflow.add_edge("get_feature_timeseries", "get_forecastings")
-        self.workflow.add_edge("get_forecastings", "get_shap_scores")
+        self.workflow.add_edge("get_feature_timeseries", "get_forecasting")
+        self.workflow.add_edge("get_forecasting", "get_shap_scores")
         self.workflow.add_edge("get_shap_scores", "get_llm_insight")
         self.workflow.add_edge("get_llm_insight", END)
         logger.info("All edges added")
@@ -214,7 +214,7 @@ class StructuredMarketAnalyst:
             raise ValueError("No .keras files found in forecast directory")
         logger.info(f"Found {len(artifacts)} forecast model artifacts")
         self.models = [
-            AutonomusForecastModelArchitecture.load(path=path) for path in artifacts
+            AutonomousForecastModelArchitecture.load(path=path) for path in artifacts
         ]
         logger.info("All forecast models loaded")
 

@@ -5,7 +5,7 @@ import tensorflow as tf
 from keras.saving import register_keras_serializable
 
 
-class AutonomusForecastModelArchitecture:
+class AutonomousForecastModelArchitecture:
     """
     Deterministic convolutional neural network (CNN) architecture for
     multi-horizon time-series forecasting.
@@ -111,7 +111,7 @@ class AutonomusForecastModelArchitecture:
 
     @staticmethod
     @register_keras_serializable(package="Autonomous")
-    def _directional_penatly_loss(y_true, y_pred, sample_weight=None):
+    def _directional_penalty_loss(y_true, y_pred, sample_weight=None):
         mse = tf.keras.losses.mean_squared_error(y_true, y_pred)
         directional_accuracy = tf.reduce_mean(
             tf.cast(tf.equal(tf.sign(y_true), tf.sign(y_pred)), tf.float32)
@@ -149,7 +149,7 @@ class AutonomusForecastModelArchitecture:
     def _compile_model(self):
         self.model.compile(
             optimizer="adam",
-            loss=AutonomusForecastModelArchitecture._directional_penatly_loss,
+            loss=AutonomousForecastModelArchitecture._directional_penalty_loss,
             metrics=["mse"],
         )
 
@@ -173,7 +173,7 @@ class AutonomusForecastModelArchitecture:
         self.model.save(path)
 
     @classmethod
-    def load(cls, path: str) -> "AutonomusForecastModelArchitecture":
+    def load(cls, path: str) -> "AutonomousForecastModelArchitecture":
         model = tf.keras.models.load_model(path)
 
         obj = cls(

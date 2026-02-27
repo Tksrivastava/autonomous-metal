@@ -7,7 +7,7 @@ from typing import Final
 from dotenv import load_dotenv
 from core.logging import LoggerFactory
 from tensorflow.keras.backend import clear_session
-from core.model import AutonomusForecastModelArchitecture
+from core.model import AutonomousForecastModelArchitecture
 
 logger = LoggerFactory().get_logger(__name__)
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     preds = []
     for days_ahead in range(HORIZON_DAYS):
         logger.info(f"Loading model from - {str(MODEL_PATH)%str(days_ahead+1)}")
-        model = AutonomusForecastModelArchitecture.load(
+        model = AutonomousForecastModelArchitecture.load(
             str(MODEL_PATH) % str(days_ahead + 1)
         )
         logger.info("Model loaded")
