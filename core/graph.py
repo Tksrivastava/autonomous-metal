@@ -54,7 +54,7 @@ class StructuredMarketAnalyst:
         x_data_path: str = None,
         raw_features_path: str = None,
         feature_name: str = None,
-        horizon: int = 5
+        horizon: int = 5,
     ):
         # Store parameters
         self.groq_model = groq_model
