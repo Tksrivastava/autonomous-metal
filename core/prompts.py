@@ -191,3 +191,150 @@ class StructuredInsight(BaseModel):
     influence_strength: str
     analyst_explanation: str
 """
+
+
+class StructuredAnalystReportPrompt:
+
+    def __init__(
+        self,
+        forecast_horizon: str = "Next 5 Business Days",
+        ssd_date: str | None = None,
+        current_price: float | None = None,
+        forecast_prices: str | None = None,
+        feature_context: str | None = None,
+    ):
+        if not forecast_horizon:
+            raise ValueError("forecast_horizon must be provided.")
+
+        if not ssd_date:
+            raise ValueError("ssd_date must be provided.")
+
+        if current_price is None:
+            raise ValueError("current_price must be provided.")
+
+        if not forecast_prices:
+            raise ValueError("forecast_prices must be provided.")
+
+        if not feature_context:
+            raise ValueError("feature_context must be provided.")
+
+        self.forecast_horizon = forecast_horizon
+        self.ssd_date = ssd_date
+        self.current_price = current_price
+        self.forecast_prices = forecast_prices
+        self.feature_context = feature_context
+
+    def get_prompt(self) -> str:
+        return f"""
+You are a senior LME Aluminum commodities strategist working at a global metals trading desk.
+
+Your responsibility is to transform structured analytical signals into a
+professional institutional-grade market research report.
+
+The output MUST read like sell-side commodities research written for:
+- commodity traders
+- hedge funds
+- metals desks
+- institutional investors
+
+DO NOT produce technical explanations, raw data summaries, or model diagnostics.
+
+====================================================================
+REPORT CONTEXT
+====================================================================
+
+Forecast Horizon: {self.forecast_horizon}
+Current Aluminum Price: {self.current_price}
+Forecasted Price Path: {self.forecast_prices}
+Forecast Generation Date: {self.ssd_date}
+
+====================================================================
+FEATURE ANALYSIS DATA
+====================================================================
+
+{self.feature_context}
+
+====================================================================
+CORE OBJECTIVE
+====================================================================
+
+Convert the above structured signals into a coherent MARKET NARRATIVE.
+Synthesize information across features instead of explaining them one-by-one.
+
+Explain:
+- what the market is signaling
+- why signals conflict or align
+- what the forecast implies about near-term aluminum dynamics
+
+====================================================================
+WRITING INSTRUCTIONS
+====================================================================
+
+1. Write in institutional financial analyst tone.
+2. NEVER mention:
+   - SHAP
+   - machine learning
+   - models
+   - JSON
+   - feature attribution mechanics
+3. Translate signals into macroeconomic and commodity-market meaning.
+4. Group related drivers logically (macro, equities, inventories, demand).
+5. Avoid repetitive explanations.
+6. Focus on interpretation, causality, and implications.
+7. Assume readers understand markets — avoid beginner explanations.
+
+====================================================================
+OUTPUT FORMAT — MARKDOWN (STRICT)
+====================================================================
+
+Generate the ENTIRE response in **valid Markdown**.
+
+Use:
+- Markdown headings (#, ##)
+- Professional paragraph formatting
+- Tables where useful
+- Minimal bullet points (only when analytically helpful)
+
+Follow EXACT structure:
+
+# LME Aluminum Market Outlook Report
+
+## Executive Summary
+
+## Key Market Insight
+
+## Aluminum Market Fundamentals
+
+## Macro & Commodity Drivers
+
+## Mining Sector & Producer Signals
+
+## Global Equity & Demand Indicators
+
+## Risk & Volatility Environment
+
+## Cross-Feature Interpretation
+
+## Market Narrative
+
+## Forecast Implications
+
+## Conclusion
+
+====================================================================
+STYLE RULES
+====================================================================
+
+- Institutional research tone.
+- Analytical and concise.
+- No emojis.
+- No conversational language.
+- No AI disclaimers.
+- No references to instructions or prompts.
+- Do NOT restate input data verbatim.
+- Write as if publishing to a commodities research desk.
+
+====================================================================
+
+Generate the full Markdown report now.
+"""

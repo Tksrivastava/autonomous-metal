@@ -174,10 +174,12 @@ These results form the quantitative benchmark reported in the project’s model 
 ```
 ├── 📁 .github
 │   └── 📁 workflows
-│       ├── ⚙️ pre-commit.yml
 │       └── ⚙️ pylint.yml
 ├── 📁 artifacts
+│   ├── ⚙️ feature-interpretation.json
 │   ├── 📄 feature-scaler.pkl
+│   ├── 📄 features-set.pkl
+│   ├── 📄 features.csv
 │   ├── 📄 lme-al-forecast-model-1-days-ahead.keras
 │   ├── 📄 lme-al-forecast-model-2-days-ahead.keras
 │   ├── 📄 lme-al-forecast-model-3-days-ahead.keras
@@ -187,12 +189,16 @@ These results form the quantitative benchmark reported in the project’s model 
 │   ├── 🖼️ loss-plot-2-days-ahead.png
 │   ├── 🖼️ loss-plot-3-days-ahead.png
 │   ├── 🖼️ loss-plot-4-days-ahead.png
-│   └── 🖼️ loss-plot-5-days-ahead.png
+│   ├── 🖼️ loss-plot-5-days-ahead.png
+│   ├── 📄 spot-prices.csv
+│   ├── 📄 training-x.pkl
+│   └── 📄 training-y.pkl
 ├── 📁 core
 │   ├── 🐍 __init__.py
+│   ├── 🐍 graph.py
 │   ├── 🐍 logging.py
 │   ├── 🐍 model.py
-│   ├── 🐍 retriever.py
+│   ├── 🐍 prompts.py
 │   └── 🐍 utils.py
 ├── 📁 logs
 ├── 📁 pipelines
@@ -204,11 +210,11 @@ These results form the quantitative benchmark reported in the project’s model 
 │   └── 🐍 prepare-training-data-pipeline.py
 ├── ⚙️ .env.example
 ├── ⚙️ .gitignore
-├── ⚙️ .pre-commit-config.yaml
 ├── 📄 LICENSE
 ├── 📝 README.md
 ├── ⚙️ pyproject.toml
-└── 📄 requirement.txt
+├── 📄 requirement.txt
+└── 📝 same-report.md
 ```
 
 ---
