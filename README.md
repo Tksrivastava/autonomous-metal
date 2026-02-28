@@ -7,7 +7,6 @@
 * Market data forecasting
 * Feature-driven reasoning
 * Explainability analysis
-* News-driven contextual understanding
 * Automated analyst-style reporting
 
 The project currently focuses on **London Metal Exchange (LME) Aluminum**, but the architecture is designed to generalize to other commodities and structured economic domains.
@@ -30,28 +29,9 @@ Autonomous Metal is built to bridge this gap by evolving from a predictive machi
 
 ---
 
-## Project Current State
-
-**Active Development — Work in Progress**
-
-### Completed
-
-* Developed **five Temporal Convolutional Network (TCN) models** for forecasting future London Metal Exchange (LME) Aluminum prices.
-* Implemented an initial **analyst-style reporting framework** that synthesizes:
-
-  * model forecasting outputs, and
-  * SHAP-based feature attribution analysis to explain driver influence.
-
-### In Progress
-
-* Integrating **news article signals** to incorporate qualitative market context and evaluate their potential impact on price movements within analytical reports.
-* Building a lightweight **FastAPI / Streamlit application** to demonstrate automated report generation and enable interactive exploration of forecasts and explanations.
-
----
-
 ## Sample Report
 
-Please refer to `/sample-report.md`for a generated analyst report produced using the current system development state.
+Please refer to `/sample-report-1.md` or `/sample-report-2.md` for a generated analyst report produced using the current system development state.
 
 ---
 
@@ -207,7 +187,6 @@ Reusable classes encapsulate domain-specific operations required for commodity f
 | `PlotHistory`      | Model training visualization                     |
 | `PrepareLabels`    | Forecast label generation                        |
 | `FetchRawFeatures` | Multi-source feature assembly                    |
-| `RAGQuestionnaire` | Structured reasoning framework for news analysis |
 
 ---
 
@@ -327,29 +306,6 @@ Constructs a **macro-aware feature space** combining:
 * supply signals,
 * logistics indicators,
 * financial market conditions.
-
----
-
-### `RAGQuestionnaire`
-
-**Description**
-Defines structured analytical questions for Retrieval-Augmented Generation workflows.
-
-**Economic Categories**
-
-* Raw material costs
-* Geopolitics
-* Government policy
-* Supply chain disruptions
-* Inventory dynamics
-* Trade flows
-* Physical demand
-* Technology developments
-* Macro-financial conditions
-
-**Purpose**
-
-Transforms qualitative news analysis into structured investigative prompts, enabling AI systems to reason similarly to human analysts.
 
 ---
 
