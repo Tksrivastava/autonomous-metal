@@ -1680,16 +1680,6 @@ Expected capabilities:
 
 ---
 
-### Streamlit
-
-Used for interactive visualization and demonstration interfaces, enabling exploration of:
-
-* forecasts,
-* feature attribution,
-* analyst reasoning outputs.
-
----
-
 ## Development & Infrastructure
 
 ### GitHub Actions
@@ -1815,7 +1805,6 @@ Z --> AA[Automated Market Report]
 %% ===============================
 
 AA --> AB[FastAPI Service]
-AA --> AC[Streamlit Interface]
 ```
  ---
 
