@@ -228,4 +228,3 @@ class FetchRawFeatures:
         )
         logger.info(f"All raw features merged - {df.shape}")
         return df
-    

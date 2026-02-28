@@ -18,10 +18,12 @@ LABEL_PATH: Final[Path] = BASE_DIR / "dataset" / "labels.csv"
 FEATURE_PATH: Final[Path] = BASE_DIR / "dataset" / "features.csv"
 ARTIFACT_PATH: Final[Path] = BASE_DIR / "artifacts"
 TRAINING_X_PATH: Final[Path] = BASE_DIR / "artifacts" / "training-x.pkl"
+ALL_X_PATH: Final[Path] = BASE_DIR / "artifacts" / "all-x.pkl"
 TRAINING_Y_PATH: Final[Path] = BASE_DIR / "artifacts" / "training-y.pkl"
 FEATURES_SET_PATH: Final[Path] = BASE_DIR / "artifacts" / "features-set.pkl"
 SPOT_PRICES_PATH: Final[Path] = BASE_DIR / "artifacts" / "spot-prices.csv"
 LAG_WINDOW: int = int(os.getenv("LAG_WINDOW"))
+CUTOFF_DATE: str = os.getenv("TRAINING_CUTOFF")
 
 if __name__ == "__main__":
     x = pd.read_csv(FEATURE_PATH)
@@ -37,27 +39,28 @@ if __name__ == "__main__":
     actual.to_csv(SPOT_PRICES_PATH, index=False)
     logger.info(f"Spot prices saved - {actual.shape}")
 
-    y = (
-        y.loc[y.ssd < "2025-02-01"]
-        .sort_values("ssd", ascending=True)
-        .reset_index(drop=True)
-    )
-    logger.info(f"Training data duration - {y.ssd.min()} - {y.ssd.max()}")
+    y = y.sort_values("ssd", ascending=True).reset_index(drop=True)
 
-    x_train, y_train = {}, {}
+    logger.info(f"Training data duration - {y.ssd.min()}>= and <{CUTOFF_DATE}")
+
+    x_train, all_x, y_train = {}, {}, {}
     for ssd in y.ssd.unique():
         temp_x = (
             x.loc[x.ssd <= ssd][features_set]
             .reset_index(drop=True)
             .iloc[-LAG_WINDOW:]
-            .drop(columns=["ssd"])
             .to_numpy()
         )
         temp_y = y.loc[(y.ssd == ssd)].sort_values("days_ahead")["y"].to_numpy()
-        if temp_x.shape[0] == 10:
+        if temp_x.shape[0] == 10 and ssd < CUTOFF_DATE:
             x_train[ssd] = temp_x
+            all_x[ssd] = temp_x
             y_train[ssd] = temp_y
+        elif temp_x.shape[0] == 10:
+            all_x[ssd] = temp_x
+
     logger.info(f"Training data prepared - {len(x_train)}, {len(y_train)}")
+    logger.info(f"Master x data prepared - {len(all_x)}")
 
     ARTIFACT_PATH.mkdir(parents=True, exist_ok=True)
     logger.info("Artifact directory ready: %s", ARTIFACT_PATH)
@@ -65,3 +68,6 @@ if __name__ == "__main__":
     logger.info(f"Saving training dataset to {TRAINING_X_PATH} and {TRAINING_Y_PATH}")
     pickle.dump(x_train, open(TRAINING_X_PATH, "wb"))
     pickle.dump(y_train, open(TRAINING_Y_PATH, "wb"))
+
+    logger.info(f"Saving training dataset to {ALL_X_PATH}")
+    pickle.dump(all_x, open(ALL_X_PATH, "wb"))

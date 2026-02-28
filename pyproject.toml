@@ -33,7 +33,9 @@ dependencies = [
     "langgraph>=0.2.20,<0.3.0",
     "langchain-groq==0.1.9",
     "nbformat==5.10.4",
-    "kaleido==0.2.1"
+    "kaleido==0.2.1",
+    "fastapi==0.134.0",
+    "uvicorn==0.41.0"
 ]
 
 [tool.setuptools.packages.find]

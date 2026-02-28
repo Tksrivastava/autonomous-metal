@@ -41,13 +41,14 @@ Please refer to `/sample-report-1.md` or `/sample-report-2.md` for a generated a
 ├── .github/
 ├── artifacts/
 ├── core/
+├── api/
 ├── pipelines/
 ├── .env.example
 ├── .gitignore
 ├── LICENSE
 ├── README.md
 ├── pyproject.toml
-├── requirement.txt
+├── requirements.txt
 └── sample-report.md
 ```
 
@@ -58,6 +59,39 @@ The design follows a pipeline-driven architecture where raw market data flows th
 **ingestion → preparation → feature engineering → forecasting → analytical interpretation**
 
 ultimately producing an automated market report.
+
+## Running the Project
+
+Start the FastAPI service to generate LME Aluminum analyst reports.
+
+```bash
+chmod +x run-api.sh
+./run-api.sh
+```
+
+Once the server starts, open: `http://localhost:8000/docs`
+
+> Ensure `.env` is configured before running the scripts.
+
+---
+
+## Retrain Models (Experiment Pipeline)
+
+Run the full training and experimentation pipeline.
+
+```bash
+chmod +x run-experiment.sh
+./run-experiment.sh
+```
+
+This script executes the complete model retraining workflow, including:
+
+* Feature preparation
+* Model training
+* Forecast generation
+* Artifact updates
+
+> Ensure `.env` is configured before running the scripts.
 
 ---
 
@@ -124,6 +158,23 @@ It acts as the application and orchestration layer, providing shared abstraction
 * modeling,
 * explainability,
 * analytical reporting workflows.
+
+---
+
+### `api/`
+
+The `api` directory exposes Autonomous Metal as a service interface, enabling external systems to interact with the analytical engine through structured endpoints.
+
+While the core module defines **how** analytical reasoning and report generation operate, the API layer defines **how users and applications access those capabilities**.
+
+It acts as the system’s interaction layer, responsible for:
+
+* request validation and input handling,
+* execution of analyst workflows,
+* report generation triggers,
+* structured response delivery.
+
+This layer allows Autonomous Metal to function as a deployable AI service, making analyst insights accessible via programmatic interfaces.
 
 ---
 
@@ -714,6 +765,150 @@ Generates the final institutional research report.
 ```
 
 Ensures consistent formatting suitable for publication or automated distribution.
+
+---
+
+## `api/main.py`
+
+This module exposes Autonomous Metal as a deployable analytical service using FastAPI.
+
+It acts as the system’s external interface, transforming analyst workflows into accessible API endpoints that allow programmatic report generation.
+
+The API layer connects user requests with the internal reasoning engine, ensuring validated inputs, controlled execution, and structured responses.
+
+### Responsibilities
+
+* Load and validate runtime configuration
+* Initialize service-level dependencies
+* Validate analytical request constraints
+* Trigger analyst workflow execution
+* Return structured markdown reports
+* Provide operational logging and error handling
+
+The module converts Autonomous Metal from an offline analytical system into a callable AI service.
+
+---
+
+### Components Overview
+
+| Component | Role |
+|----------|------|
+| `FastAPI Application` | Service interface for report generation |
+| `ReportRequest` | Input schema validation |
+| `validate_friday` | Date constraint enforcement |
+| `create_report` | Analyst workflow execution endpoint |
+
+---
+
+### FastAPI Application
+
+**Description**
+
+Initializes the Autonomous Metal API service and defines metadata used for service documentation.
+
+**Responsibilities**
+
+* Configure API metadata
+* Enable automatic OpenAPI documentation
+* Expose analyst functionality through REST endpoints
+
+**Output**
+
+Interactive API documentation available at:
+
+```
+/docs
+```
+
+---
+
+### `ReportRequest`
+
+**Description**
+
+Defines the request schema for report generation using Pydantic validation.
+
+**Responsibilities**
+
+* Enforce structured input format
+* Validate required fields before execution
+* Provide automatic API documentation examples
+
+**Input Fields**
+
+| Field | Description |
+|------|-------------|
+| `friday_date` | Target report date in `YYYY-MM-DD` format |
+
+**Purpose**
+
+Ensures all analyst requests follow a consistent and validated structure before entering the analytical pipeline.
+
+---
+
+### `validate_friday`
+
+**Description**
+
+Validates temporal constraints required by the forecasting system.
+
+**Responsibilities**
+
+* Parse incoming date strings
+* Ensure correct format (`YYYY-MM-DD`)
+* Enforce Friday-only execution
+* Restrict requests to supported historical range
+
+**Validation Rules**
+
+| Rule | Requirement |
+|------|------------|
+| Format | `YYYY-MM-DD` |
+| Day | Must be Friday |
+| Range | Between 2015-01-14 and 2026-02-05 |
+
+**Purpose**
+
+Forecasting models operate on weekly market structure aligned with Friday settlement logic.
+This validator guarantees temporal consistency across all analytical executions.
+
+---
+
+### `create_report`
+
+**Description**
+
+Primary API endpoint responsible for generating analyst-style markdown reports.
+
+**Execution Flow**
+
+1. Receive validated request payload
+2. Perform temporal validation
+3. Initialize `StructuredFeatureMarketAnalyst`
+4. Execute structured reasoning workflow
+5. Generate markdown analyst report
+6. Return structured API response
+
+**Responsibilities**
+
+* Orchestrate analyst pipeline execution
+* Inject configuration and artifact dependencies
+* Handle runtime failures safely
+* Provide execution logging
+
+**Response Structure**
+
+```json
+{
+  "status": "success",
+  "report_date": "YYYY-MM-DD",
+  "markdown_report": "Generated analyst report"
+}
+```
+
+**Purpose**
+
+Transforms Autonomous Metal into an on-demand analytical engine capable of producing structured market insights through a simple API call.
 
 ---
 
@@ -1341,6 +1536,21 @@ Responsibilities:
 * automated dataset refresh.
 
 This eliminates manual data dependency management.
+
+---
+
+### FastAPI
+
+Provides the service interface that exposes Autonomous Metal’s analytical engine as a deployable API.
+
+Advantages:
+
+* high-performance asynchronous web framework,
+* automatic request validation using Pydantic schemas,
+* built-in OpenAPI documentation,
+* lightweight deployment for ML inference services.
+
+FastAPI enables analyst report generation through structured HTTP endpoints, allowing external systems and users to interact with the forecasting and reasoning pipeline programmatically.
 
 ---
 
