@@ -400,6 +400,8 @@ class StructuredFeatureMarketAnalyst:
 
             time.sleep(30)
 
+        self.intermediate_graph_response = responses
+
         return responses
 
     def get_analyst_report_on_structured_inputs(
